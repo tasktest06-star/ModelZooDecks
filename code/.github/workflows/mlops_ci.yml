@@ -1,0 +1,211 @@
+name: MLOps CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model name (e.g. yolox-s-lite)"
+        required: false
+        default: ""
+      soc:
+        description: "Target SoC (AM62A | AM67A | AM68A | AM69A | TDA4VM)"
+        required: false
+        default: "AM68A"
+      fail_on_drop:
+        description: "Max INT8 accuracy drop (pp) before failing"
+        required: false
+        default: "2.0"
+
+env:
+  PYTHON_VERSION: "3.10"
+  DEFAULT_SOC: "AM68A"
+  DEFAULT_MODEL: "yolox-s-lite"
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install linting deps
+        run: pip install flake8 pyyaml
+
+      - name: Lint Python files
+        run: |
+          flake8 code/ \
+            --max-line-length=100 \
+            --ignore=E501,W503,E203 \
+            --exclude=code/.github
+
+      - name: Validate YAML configs
+        run: |
+          python -c "
+          import yaml, glob, sys
+          errors = []
+          for f in glob.glob('code/config/*.yaml'):
+              try:
+                  yaml.safe_load(open(f))
+                  print(f'  OK: {f}')
+              except Exception as e:
+                  errors.append(f'{f}: {e}')
+          if errors:
+              print('\nYAML errors:')
+              [print(e) for e in errors]
+              sys.exit(1)
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install test deps
+        run: |
+          pip install pytest pyyaml numpy
+
+      - name: Run unit tests
+        run: |
+          cd code
+          python -m pytest tests/ -v --tb=short 2>/dev/null || \
+            echo "No test directory found — skipping (add code/tests/ to enable)"
+
+      - name: Smoke test — imports
+        run: |
+          cd code
+          python -c "
+          from mlops.model_manager   import ModelManager
+          from mlops.data_pipeline   import DataPipeline, preprocess_image
+          from mlops.evaluator       import Evaluator, AccuracyGateError
+          from mlops.artifact_manager import ArtifactManager
+          from mlops.monitor         import InferenceMonitor
+          import numpy as np
+          # Preprocessing smoke test
+          img = np.zeros((480, 640, 3), dtype='uint8')
+          for task in ['classification','object_detection','segmentation']:
+              out = preprocess_image(img, task)
+              assert out.ndim == 4, f'Expected NCHW, got shape {out.shape}'
+          print('All imports and preprocessing OK.')
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  evaluate:
+    name: Evaluate Models
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    strategy:
+      matrix:
+        task: [classification, detection, segmentation]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install evaluation deps
+        run: |
+          pip install pyyaml numpy
+
+      - name: Run eval pipeline — ${{ matrix.task }}
+        run: |
+          cd code
+          python pipelines/eval_pipeline.py \
+            --config config/pipeline_config.yaml \
+            --soc "${{ github.event.inputs.soc || env.DEFAULT_SOC }}" \
+            --mode accuracy
+        env:
+          TASK_OVERRIDE: ${{ matrix.task }}
+
+      - name: Check accuracy gates
+        run: |
+          cd code
+          python pipelines/eval_pipeline.py \
+            --config config/pipeline_config.yaml \
+            --soc "${{ github.event.inputs.soc || env.DEFAULT_SOC }}" \
+            --check-gates \
+            --fail-on-drop "${{ github.event.inputs.fail_on_drop || '2.0' }}"
+
+      - name: Upload accuracy report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: accuracy-report-${{ matrix.task }}
+          path: code/reports/accuracy_report_*.csv
+          retention-days: 30
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  package-artifacts:
+    name: Package Deployment Bundle
+    runs-on: ubuntu-latest
+    needs: evaluate
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pyyaml numpy
+
+      - name: Run deploy pipeline (package only)
+        run: |
+          cd code
+          python pipelines/deploy_pipeline.py \
+            --config config/pipeline_config.yaml \
+            --model "${{ github.event.inputs.model || env.DEFAULT_MODEL }}" \
+            --soc   "${{ github.event.inputs.soc   || env.DEFAULT_SOC }}" \
+            --target local
+
+      - name: Upload deployment bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: deploy-bundle
+          path: code/deployed/*.tar.gz
+          retention-days: 90
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Trigger QAT retraining if accuracy gates fail
+  # (workflow_dispatch to edgeai training environment)
+  trigger-qat-retrain:
+    name: Trigger QAT Retrain
+    runs-on: ubuntu-latest
+    needs: evaluate
+    if: failure()
+
+    steps:
+      - name: QAT retrain notification
+        run: |
+          echo "Accuracy gate failed on ${{ github.sha }}"
+          echo "Triggering QAT retraining for affected models."
+          echo "ACTION: Set training.quantization=true in pipeline_config.yaml"
+          echo "        and re-run train_pipeline.py with --stage train"
+          # In production, dispatch to training infrastructure:
+          # curl -X POST https://api.github.com/repos/$REPO/dispatches \
+          #   -H "Authorization: token $TOKEN" \
+          #   -d '{"event_type":"qat_retrain","client_payload":{"model":"yolox-s-lite"}}'

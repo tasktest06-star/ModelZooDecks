@@ -1,0 +1,234 @@
+# TI EdgeAI Model Registry
+# Maps model names to artifact IDs, metrics, and metadata
+# Compatible with edgeai-modelzoo v11.2.0
+
+models:
+
+  # ─── Classification ──────────────────────────────────────────────────────────
+
+  mobilenetv2:
+    version: "11.2.0"
+    task: classification
+    format: onnx
+    input_size: [224, 224]
+    model_id: "cl-6360"
+    gmacs: 0.300
+    artifact_ids:
+      AM62A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
+      AM67A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
+      AM68A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
+      AM69A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
+      TDA4VM: "ONR-CL-6360-mobv2-tv-imagenet-224x224"
+    metrics:
+      top1_fp32: 72.13
+      top1_int8: 71.8
+      int8_drop: 0.33
+    dataset: imagenet
+    status: production
+
+  mobilenetv3lite-large:
+    version: "11.2.0"
+    task: classification
+    format: onnx
+    input_size: [224, 224]
+    model_id: "cl-6370"
+    gmacs: 1.08
+    artifact_ids:
+      AM62A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
+      AM67A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
+      AM68A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
+      AM69A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
+      TDA4VM: "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
+    metrics:
+      top1_fp32: 72.22
+      top1_int8: 71.9
+      int8_drop: 0.32
+    dataset: imagenet
+    status: production
+
+  efficientnet-lite4:
+    version: "11.2.0"
+    task: classification
+    format: tflite
+    input_size: [224, 224]
+    model_id: "cl-2000"
+    gmacs: 2.645
+    artifact_ids:
+      AM62A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
+      AM67A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
+      AM68A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
+      AM69A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
+      TDA4VM: "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
+    metrics:
+      top1_fp32: 82.6
+      top1_int8: 82.4
+      int8_drop: 0.20
+    dataset: imagenet
+    status: production
+
+  swin-tiny:
+    version: "11.2.0"
+    task: classification
+    format: onnx
+    input_size: [224, 224]
+    model_id: "cl-6700"
+    gmacs: 4.50
+    artifact_ids:
+      AM68A:  "ONR-CL-6700-swin-tiny-imagenet-224x224"
+      AM69A:  "ONR-CL-6700-swin-tiny-imagenet-224x224"
+    metrics:
+      top1_fp32: 82.1
+      top1_int8: 77.9
+      int8_drop: 4.2
+    dataset: imagenet
+    status: production
+    notes: "Larger INT8 drop typical for transformer models"
+
+  # ─── Object Detection ─────────────────────────────────────────────────────────
+
+  yolox-nano-lite:
+    version: "11.2.0"
+    task: object_detection
+    format: onnx
+    input_size: [416, 416]
+    model_id: "od-8200"
+    gmacs: 1.476
+    artifact_ids:
+      AM62A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
+      AM67A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
+      AM68A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
+      AM69A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
+      TDA4VM: "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
+    metrics:
+      mAP_fp32: 24.9
+      mAP_int8: 24.6
+      ap50_fp32: 41.8
+      int8_drop: 0.3
+    dataset: coco
+    num_classes: 80
+    status: production
+
+  yolox-s-lite:
+    version: "11.2.0"
+    task: object_detection
+    format: onnx
+    input_size: [640, 640]
+    model_id: "od-8220"
+    gmacs: 13.43
+    artifact_ids:
+      AM62A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
+      AM67A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
+      AM68A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
+      AM69A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
+      TDA4VM: "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
+    metrics:
+      mAP_fp32: 38.6
+      mAP_int8: 38.2
+      ap50_fp32: 56.0
+      int8_drop: 0.4
+    dataset: coco
+    num_classes: 80
+    status: production
+
+  yolox-m-lite:
+    version: "11.2.0"
+    task: object_detection
+    format: onnx
+    input_size: [640, 640]
+    model_id: "od-8230"
+    gmacs: 36.9
+    artifact_ids:
+      AM68A:  "ONR-OD-8230-yolox-m-lite-mmdet-coco-640x640"
+      AM69A:  "ONR-OD-8230-yolox-m-lite-mmdet-coco-640x640"
+      TDA4VM: "ONR-OD-8230-yolox-m-lite-mmdet-coco-640x640"
+    metrics:
+      mAP_fp32: 44.8
+      mAP_int8: 44.3
+      ap50_fp32: 63.0
+      int8_drop: 0.5
+    dataset: coco
+    num_classes: 80
+    status: production
+
+  # ─── Semantic Segmentation ────────────────────────────────────────────────────
+
+  deeplabv3lite-mobilev2:
+    version: "11.2.0"
+    task: segmentation
+    format: onnx
+    input_size: [512, 512]
+    model_id: "ss-8610"
+    gmacs: 3.61
+    artifact_ids:
+      AM62A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
+      AM67A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
+      AM68A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
+      AM69A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
+      TDA4VM: "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
+    metrics:
+      miou_fp32: 49.95
+      miou_int8: 49.5
+      int8_drop: 0.45
+    dataset: ade20k32
+    num_classes: 32
+    status: production
+
+  fpnlite-mobilev2:
+    version: "11.2.0"
+    task: segmentation
+    format: onnx
+    input_size: [512, 512]
+    model_id: "ss-8630"
+    gmacs: 5.44
+    artifact_ids:
+      AM62A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
+      AM67A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
+      AM68A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
+      AM69A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
+      TDA4VM: "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
+    metrics:
+      miou_fp32: 57.68
+      miou_int8: 57.2
+      int8_drop: 0.48
+    dataset: cocoseg21
+    num_classes: 21
+    status: production
+
+  # ─── Keypoint Detection ───────────────────────────────────────────────────────
+
+  yoloxpose-s-lite:
+    version: "11.2.0"
+    task: keypoint
+    format: onnx
+    input_size: [640, 640]
+    model_id: "kd-7070"
+    artifact_ids:
+      AM68A:  "ONR-KD-7070-yoloxpose-s-lite-mmpose-coco-640x640"
+      AM69A:  "ONR-KD-7070-yoloxpose-s-lite-mmpose-coco-640x640"
+      TDA4VM: "ONR-KD-7070-yoloxpose-s-lite-mmpose-coco-640x640"
+    metrics:
+      AP_fp32: 56.4
+      AP_int8: 55.1
+      int8_drop: 1.3
+    dataset: coco_keypoints
+    num_keypoints: 17
+    status: production
+
+  # ─── Depth Estimation ─────────────────────────────────────────────────────────
+
+  midas-small:
+    version: "11.2.0"
+    task: depth_estimation
+    format: onnx
+    input_size: [256, 256]
+    model_id: "de-7310"
+    gmacs: 4.63
+    artifact_ids:
+      AM62A:  "ONR-DE-7310-midas-small-v21-nyu-256x256"
+      AM68A:  "ONR-DE-7310-midas-small-v21-nyu-256x256"
+      AM69A:  "ONR-DE-7310-midas-small-v21-nyu-256x256"
+    metrics:
+      delta1_fp32: 86.67
+      delta1_int8: 85.9
+    dataset: nyudepthv2
+    status: production

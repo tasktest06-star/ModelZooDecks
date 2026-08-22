@@ -1,0 +1,28 @@
+# TI EdgeAI MLOps Pipeline — Python dependencies
+# Core (no ML framework required for pipeline scaffolding)
+pyyaml>=6.0
+numpy>=1.23
+
+# Image loading (optional — used by DataPipeline for raw image folders)
+Pillow>=9.0
+
+# ONNX model inspection (optional)
+onnx>=1.14
+onnxruntime>=1.16
+
+# COCO evaluation (optional — enables full mAP in Evaluator)
+# pycocotools>=2.0
+
+# Testing
+pytest>=7.0
+
+# Linting
+flake8>=6.0
+
+# ── TI EdgeAI Frameworks (install separately from their GitHub repos) ──────────
+# edgeai-torchvision:  https://github.com/TexasInstruments/edgeai-torchvision
+# edgeai-mmdetection:  https://github.com/TexasInstruments/edgeai-mmdetection
+# edgeai-mmpose:       (TI fork of MMPose)
+# edgeai-tidl-tools:   https://github.com/TexasInstruments/edgeai-tidl-tools
+# edgeai-benchmark:    https://github.com/TexasInstruments/edgeai-benchmark
+# edgeai-tidlrunner:   https://github.com/TexasInstruments/edgeai-tidlrunner

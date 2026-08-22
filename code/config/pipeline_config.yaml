@@ -1,0 +1,88 @@
+# TI EdgeAI MLOps Pipeline Configuration
+# Compatible with edgeai-modelzoo v11.2.0
+
+modelzoo:
+  version: "11.2.0"
+  base_url: "https://software-dl.ti.com/jacinto7/esd/modelzoo/11.2.0/"
+  local_cache: "./model_cache"
+  artifact_dir: "./artifacts"
+
+# Default SoC target — choose from: TDA4VM, AM62A, AM67A, AM68A, AM69A
+soc: "AM68A"
+
+# Task to run (classification | detection | segmentation | depth_estimation |
+#              keypoint | 3d_detection | 6d_pose)
+task: "detection"
+
+# Model to use (must match a key in model_registry.yaml)
+model: "yolox-s-lite"
+
+training:
+  framework: "edgeai-mmdetection"   # edgeai-torchvision | edgeai-mmdetection | edgeai-mmpose
+  epochs: 100
+  batch_size: 16
+  learning_rate: 0.001
+  quantization: false               # set true to enable QAT
+  qat_bitwidth_weights: 8
+  qat_bitwidth_activations: 8
+  checkpoint_dir: "./checkpoints"
+  resume_from: null
+
+export:
+  format: "onnx"                    # onnx | tflite
+  opset: 11
+  input_shape: [1, 3, 640, 640]     # NCHW, fixed shape required for TIDL
+  output_path: "./exports"
+
+compilation:
+  tidl_tools_path: "./edgeai-tidl-tools"
+  calibration_frames: 500
+  accuracy_level: 1                 # 0=fastest, 9=best accuracy
+  tensor_bits: 8                    # INT8
+  output_dir: "./compiled"
+  # Per-SoC artifact output — populated automatically
+  soc_targets:
+    - AM62A
+    - AM67A
+    - AM68A
+    - AM69A
+    - TDA4VM
+
+evaluation:
+  dataset_path: "./datasets"
+  dataset: "coco"                   # coco | imagenet | ade20k | cityscapes | nyu
+  split: "val"
+  num_frames: 1000                  # -1 for full validation set
+  # Detection-specific
+  detection_threshold: 0.05         # use 0.3 for performance mode
+  detection_top_k: 500              # use 200 for performance mode
+  report_dir: "./reports"
+  # Accuracy gates (CI will fail if drop exceeds these)
+  gates:
+    classification:
+      min_metric: 70.0              # Top-1 %
+      max_int8_drop: 2.0            # percentage points
+    detection:
+      min_metric: 24.0              # mAP %
+      max_int8_drop: 1.0
+    segmentation:
+      min_metric: 49.0              # MeanIoU %
+      max_int8_drop: 1.5
+    keypoint:
+      min_metric: 47.0              # AP %
+      max_int8_drop: 2.0
+
+deployment:
+  bundle_output: "./deploy_bundles"
+  # Push target: local path or SSH target (user@host:/path)
+  target: "local"
+  # target: "root@192.168.0.100:/opt/tidl_models"
+  verify_after_push: true
+
+monitoring:
+  enabled: true
+  latency_alert_ms: 35.0           # alert if single-frame latency > this
+  confidence_drift_threshold: 0.3  # alert if avg confidence < this
+  drift_window_frames: 100         # rolling window for drift detection
+  log_dir: "./monitor_logs"
+  webhook_url: null                # set to Slack/Teams URL for alerts

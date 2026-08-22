@@ -1753,6 +1753,506 @@ de-7300     (onnxrt depth)
 \end{frame}
 
 %==============================================================
+\section{MLOps Pipeline}
+%==============================================================
+
+%--------------------------------------------------------------
+% SLIDE M1: MLOps Pipeline Overview
+%--------------------------------------------------------------
+\begin{frame}{MLOps Pipeline for TI EdgeAI Model Zoo}
+  \begin{tikzpicture}[scale=0.78,
+    stage/.style={rounded corners=5pt, minimum width=2.0cm, minimum height=1.1cm,
+                  align=center, draw, thick, font=\scriptsize\bfseries, drop shadow,
+                  inner sep=4pt},
+    arr/.style={->, >=Stealth, very thick, TIDark}
+  ]
+    % ---- Pipeline stages ----
+    \node[stage, fill=TIBlue!25,   draw=TIBlue]    (d1) at (-5.4,2.2)
+      {\textcolor{TIBlue}{\faDatabase}\\Data\\Ingestion};
+    \node[stage, fill=TIGreen!20,  draw=TIGreen]   (d2) at (-2.7,2.2)
+      {\textcolor{TIGreen}{\faCogs}\\Model\\Training};
+    \node[stage, fill=TIOrange!20, draw=TIOrange]  (d3) at (0,2.2)
+      {\textcolor{TIOrange}{\faFileExport}\\Model\\Export};
+    \node[stage, fill=TIRed!20,    draw=TIRed]     (d4) at (2.7,2.2)
+      {\textcolor{TIRed}{\faMicrochip}\\TIDL\\Compile};
+    \node[stage, fill=TIBlue!20,   draw=TIBlue!70] (d5) at (5.4,2.2)
+      {\textcolor{TIBlue!80}{\faChartBar}\\Evaluation};
+    \node[stage, fill=TIGreen!25,  draw=TIGreen!70](d6) at (8.1,2.2)
+      {\textcolor{TIGreen!80}{\faServer}\\Deploy to\\TI SoC};
+
+    \draw[arr] (d1)--(d2); \draw[arr] (d2)--(d3); \draw[arr] (d3)--(d4);
+    \draw[arr] (d4)--(d5); \draw[arr] (d5)--(d6);
+
+    % Sub-labels
+    \node[font=\tiny, TIBlue,   text width=1.9cm, align=center] at (-5.4,1.35)
+      {ImageNet / COCO\\custom datasets};
+    \node[font=\tiny, TIGreen,  text width=2.1cm, align=center] at (-2.7,1.35)
+      {edgeai-torchvision\\edgeai-mmdetection};
+    \node[font=\tiny, TIOrange, text width=1.9cm, align=center] at (0,1.35)
+      {ONNX / TFLite\\export scripts};
+    \node[font=\tiny, TIRed,    text width=1.9cm, align=center] at (2.7,1.35)
+      {edgeai-tidl-tools\\INT8 calibrate};
+    \node[font=\tiny, TIBlue!80,text width=1.9cm, align=center] at (5.4,1.35)
+      {edgeai-benchmark\\accuracy + FPS};
+    \node[font=\tiny, TIGreen!80,text width=1.9cm,align=center] at (8.1,1.35)
+      {AM68A / AM69A\\TDA4VM EVM};
+
+    % Feedback arrow
+    \draw[->, >=Stealth, dashed, thick, TIRed!70, bend right=30]
+      (d5.south) to node[below, font=\tiny\itshape, TIRed]{Accuracy drop $\Rightarrow$ Retrain / QAT} (d2.south);
+
+    % MLOps Automation box
+    \node[rounded corners=5pt, fill=TIDark!12, draw=TIDark!50,
+          minimum width=2.5cm, minimum height=3.0cm,
+          label={[font=\scriptsize\bfseries, TIDark]north:\faRobot~MLOps Automation},
+          inner sep=5pt, align=left, font=\scriptsize] at (10.9, 1.85)
+      {\faArchive~Model Registry\\[3pt]
+       \faTags~Artifact Version.\\[3pt]
+       \faCodeBranch~CI/CD\\(GitHub Actions)\\[3pt]
+       \faEye~Drift Monitor};
+  \end{tikzpicture}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE M2: Model Registry & Versioning
+%--------------------------------------------------------------
+\begin{frame}{Model Registry \& Artifact Versioning}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{block}{\faArchive~model\_registry.yaml}
+        \lstset{basicstyle=\ttfamily\tiny, backgroundcolor=\color{TIGray},
+                frame=single, framesep=2pt, breaklines=true}
+        \begin{lstlisting}
+models:
+  yolox-s-lite:
+    version: "11.2.0"
+    task: object_detection
+    format: onnx
+    input_size: [640, 640]
+    model_id: "od-8220"
+    artifact_ids:
+      AM68A: "ONR-OD-8220-yolox-s-lite-coco-640x640"
+      AM62A: "ONR-OD-8220-yolox-s-lite-coco-640x640"
+    metrics:
+      mAP: 38.3
+      INT8_mAP: 38.2
+    status: production
+        \end{lstlisting}
+      \end{block}
+      \vspace{0.2cm}
+      \begin{exampleblock}{\faPython~ModelManager API}
+        \lstset{basicstyle=\ttfamily\tiny, backgroundcolor=\color{TIGray},
+                frame=single, framesep=2pt}
+        \begin{lstlisting}
+manager = ModelManager(config)
+manager.download_model("yolox-s-lite",
+                        soc="AM68A")
+manager.register(model_id, metadata)
+manager.get_artifact(model_id, soc="AM68A")
+manager.list_models(task="detection")
+        \end{lstlisting}
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \begin{tikzpicture}[scale=0.85,
+        vbox/.style={rounded corners=4pt, minimum width=3.2cm,
+                     minimum height=0.8cm, align=center, draw, thick,
+                     font=\scriptsize\bfseries, inner sep=4pt},
+        varr/.style={->, >=Stealth, thick, TIDark}
+      ]
+        \node[vbox, fill=TIRed!15,    draw=TIRed]    (v1) at (0,4.5)
+          {Model Zoo v11.2.0};
+        \node[vbox, fill=TIDark!12,   draw=TIDark]   (v2) at (0,3.4)
+          {\faCodeBranch~Git Tag};
+        \node[vbox, fill=TIBlue!15,   draw=TIBlue]   (v3) at (0,2.3)
+          {\faArchive~Model Registry};
+        \node[vbox, fill=TIOrange!15, draw=TIOrange] (v4) at (0,1.2)
+          {\faBox~Artifact Store};
+        \node[vbox, fill=TIGreen!15,  draw=TIGreen]  (v5) at (0,0.1)
+          {\faMicrochip~SoC Deploy};
+
+        \draw[varr] (v1)--(v2); \draw[varr] (v2)--(v3);
+        \draw[varr] (v3)--(v4); \draw[varr] (v4)--(v5);
+
+        % Version badges
+        \foreach \y/\tag in {4.5/v11.2.0, 3.4/tag-11.2.0,
+                              2.3/registry:od-8220, 1.2/.tar.gz, 0.1/AM68A}
+          \node[rounded corners=2pt, fill=TIDark, text=white,
+                font=\tiny\bfseries, inner sep=2pt] at (2.2,\y) {\tag};
+      \end{tikzpicture}
+
+      \vspace{0.2cm}
+      \begin{alertblock}{\scriptsize \faShieldAlt~Versioning Policy}
+        \scriptsize Every model artifact is tagged with \textbf{modelzoo version},
+        \textbf{SoC target}, \textbf{quantization mode} (FP32/INT8/QAT),
+        and \textbf{accuracy metrics} at registration time.
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE M3: Data Pipeline & Preprocessing
+%--------------------------------------------------------------
+\begin{frame}{Data Pipeline \& Preprocessing}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{block}{\faFilter~Preprocessing per Task}
+        \begin{itemize}\scriptsize
+          \item \textbf{Classification:} Resize$\to$224$\times$224,
+                Normalize (mean=[0.485,0.456,0.406],\\
+                \hspace{1.5cm}std=[0.229,0.224,0.225]), ToTensor
+          \item \textbf{Detection:} LetterBox resize, BGR$\to$RGB,
+                divide by 255.0, fixed shape
+          \item \textbf{Segmentation:} Resize$\to$512$\times$512,
+                Normalize, ToTensor, ignore\_index=255
+        \end{itemize}
+      \end{block}
+      \vspace{0.2cm}
+      \begin{exampleblock}{\faPython~DataPipeline Usage}
+        \lstset{basicstyle=\ttfamily\tiny, backgroundcolor=\color{TIGray},
+                frame=single, framesep=2pt, breaklines=true}
+        \begin{lstlisting}
+pipeline = DataPipeline(
+    task="detection",
+    input_size=(640, 640),
+    dataset="coco")
+loader = pipeline.get_dataloader(
+    split="val", batch_size=1)
+for imgs, targets in loader:
+    preds = model.infer(imgs)
+    metrics.update(preds, targets)
+score = metrics.compute()
+        \end{lstlisting}
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \begin{tikzpicture}[scale=0.78,
+        dbox/.style={rounded corners=4pt, minimum width=2.3cm,
+                     minimum height=0.65cm, align=center, draw,
+                     font=\scriptsize\bfseries, inner sep=3pt},
+        darr/.style={->, >=Stealth, thick, TIDark}
+      ]
+        \node[dbox, fill=TIBlue!20,   draw=TIBlue]    at (0,6.2) (r1){Raw Images};
+        \node[dbox, fill=TIDark!10,   draw=TIDark!50] at (0,5.3) (r2){Decode / Load};
+        \node[dbox, fill=TIOrange!20, draw=TIOrange]  at (0,4.4) (r3){Resize / LetterBox};
+        \node[dbox, fill=TIGreen!20,  draw=TIGreen]   at (0,3.5) (r4){Normalize};
+        \node[dbox, fill=TIBlue!15,   draw=TIBlue!60] at (0,2.6) (r5){$\to$ Tensor (NCHW)};
+        \node[dbox, fill=TIRed!20,    draw=TIRed]     at (0,1.7) (r6){\faMicrochip~Model Infer};
+        \node[dbox, fill=TIOrange!15, draw=TIOrange!60]at(0,0.8) (r7){Post-process};
+        \node[dbox, fill=TIGreen!25,  draw=TIGreen!70]at (0,0.0) (r8){Metrics Update};
+
+        \foreach \a/\b in {r1/r2,r2/r3,r3/r4,r4/r5,r5/r6,r6/r7,r7/r8}
+          \draw[darr] (\a)--(\b);
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE M4: Training → Export → Compile
+%--------------------------------------------------------------
+\begin{frame}{Training $\to$ Export $\to$ TIDL Compile}
+  \begin{columns}[T]
+    \begin{column}{0.31\textwidth}
+      \begin{block}{\textcolor{TIBlue}{\textbf{Phase 1 — Train}}}
+        \begin{itemize}\scriptsize
+          \item edgeai-torchvision (cls)
+          \item edgeai-mmdetection (det)
+          \item edgeai-mmpose (kpt)
+          \item QAT: \texttt{--quantization}\\
+                \texttt{bitwidth\_weights=8}
+          \item Output: \texttt{.pth} checkpoint
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{block}{\textcolor{TIOrange}{\textbf{Phase 2 — Export}}}
+        \begin{itemize}\scriptsize
+          \item \texttt{export\_model\_torchvision.py}
+          \item \texttt{torch.onnx.export(model,}\\
+                \texttt{\quad input, "model.onnx")}
+          \item Output: \texttt{.onnx} / \texttt{.tflite}
+          \item ONNX opset 11+
+          \item Fixed input shape required
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{block}{\textcolor{TIRed}{\textbf{Phase 3 — Compile}}}
+        \begin{itemize}\scriptsize
+          \item edgeai-tidl-tools
+          \item INT8 calibration (500 imgs)
+          \item Output: TIDL binary
+          \item Per-SoC: AM62A $\to$ AM69A
+          \item \texttt{param.yaml} config generated
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+  \vspace{0.3cm}
+  \begin{block}{\faPython~TrainPipeline API (pipelines/train\_pipeline.py)}
+    \lstset{basicstyle=\ttfamily\scriptsize, backgroundcolor=\color{TIGray},
+            frame=single, framesep=3pt}
+    \begin{lstlisting}
+pipeline = TrainPipeline(config)
+pipeline.train()              # checkpoint.pth (edgeai-torchvision / mmdetection)
+pipeline.export()             # model.onnx  (torch.onnx.export, opset 11)
+pipeline.compile(soc="AM68A") # TIDL binary (edgeai-tidl-tools, INT8)
+pipeline.evaluate()           # accuracy_report.csv (edgeai-benchmark)
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE M5: Evaluation & CI/CD
+%--------------------------------------------------------------
+\begin{frame}{Automated Evaluation \& CI/CD}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \begin{block}{\faCheckCircle~Accuracy Gates}
+        \scriptsize
+        \begin{tabular}{p{2.0cm}p{1.5cm}p{2.0cm}}
+          \toprule
+          \textbf{Task} & \textbf{Metric} & \textbf{Gate} \\
+          \midrule
+          \rowcolor{TIGray}
+          Classification & Top-1 & $\geq$70\%, INT8 drop $<$2\% \\
+          Detection & mAP & $\geq$24\%, INT8 drop $<$1\% \\
+          \rowcolor{TIGray}
+          Segmentation & MeanIoU & $\geq$49\%, INT8 drop $<$1.5\% \\
+          Keypoint & AP & $\geq$47\%, INT8 drop $<$2\% \\
+          \bottomrule
+        \end{tabular}
+      \end{block}
+      \vspace{0.2cm}
+      \begin{alertblock}{\scriptsize \faExclamationTriangle~CI Gate Rule}
+        \scriptsize If INT8 accuracy drop exceeds threshold,
+        pipeline \textbf{fails the CI job} and triggers
+        \textbf{QAT retraining} automatically via workflow dispatch.
+      \end{alertblock}
+      \vspace{0.2cm}
+      \begin{exampleblock}{\scriptsize \faPython~Evaluator}
+        \lstset{basicstyle=\ttfamily\tiny, backgroundcolor=\color{TIGray},
+                frame=none}
+        \begin{lstlisting}
+ev = Evaluator(config)
+ev.run(model_id="od-8220",
+       soc="AM68A", split="val")
+ev.check_gates()  # raises if fail
+ev.save_report()  # accuracy_report.csv
+        \end{lstlisting}
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.50\textwidth}
+      \begin{block}{\faCodeBranch~.github/workflows/mlops\_ci.yml}
+        \lstset{basicstyle=\ttfamily\tiny, backgroundcolor=\color{TIGray},
+                frame=single, framesep=2pt, breaklines=true}
+        \begin{lstlisting}
+name: MLOps CI
+on: [push, pull_request]
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run eval pipeline
+        run: |
+          python pipelines/eval_pipeline.py \
+            --config config/pipeline_config.yaml
+      - name: Check accuracy gates
+        run: |
+          python pipelines/eval_pipeline.py \
+            --check-gates \
+            --fail-on-drop 2.0
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: accuracy-report
+          path: reports/accuracy_report*.csv
+        \end{lstlisting}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE M6: Deployment & Monitoring
+%--------------------------------------------------------------
+\begin{frame}{Deployment \& Runtime Monitoring}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \begin{block}{\faBox~Deployment Bundle Contents}
+        \begin{itemize}\scriptsize
+          \item TIDL compiled network files (\texttt{*.bin})
+          \item \texttt{param.yaml} (model config + thresholds)
+          \item Preprocessing config (mean, std, input size)
+          \item Post-processing params (class labels, conf threshold)
+          \item \texttt{metadata.json} (version, task, SoC, accuracy)
+        \end{itemize}
+      \end{block}
+      \vspace{0.2cm}
+      \begin{exampleblock}{\faPython~Deployer API}
+        \lstset{basicstyle=\ttfamily\tiny, backgroundcolor=\color{TIGray},
+                frame=single, framesep=2pt}
+        \begin{lstlisting}
+deployer = Deployer(config)
+bundle = deployer.package(
+    model_id="yolox-s-lite",
+    soc="AM68A",
+    version="11.2.0")
+deployer.push(bundle,
+              target="SK-AM68A")
+deployer.verify(bundle)  # smoke test
+        \end{lstlisting}
+      \end{exampleblock}
+      \vspace{0.2cm}
+      \begin{alertblock}{\scriptsize \faExclamationCircle~Drift Alert}
+        \scriptsize If avg detection confidence $<$ 0.3 over 100
+        consecutive frames $\Rightarrow$ flag model for retraining
+        and notify via CI webhook.
+      \end{alertblock}
+    \end{column}
+
+    \begin{column}{0.50\textwidth}
+      \begin{tikzpicture}
+        \begin{axis}[
+          title={\scriptsize Runtime Monitoring — Inference Latency (ms)},
+          xlabel={\scriptsize Frame batch},
+          ylabel={\scriptsize Latency (ms)},
+          ymin=0, ymax=50,
+          xmin=0.5, xmax=10.5,
+          width=6.2cm, height=3.4cm,
+          grid=major, grid style={TIGray},
+          tick label style={font=\tiny},
+          label style={font=\scriptsize},
+          title style={font=\scriptsize\bfseries},
+          ybar, bar width=5pt,
+        ]
+          \addplot[fill=TIBlue!70]
+            coordinates {(1,18)(2,19)(3,17)(4,21)(5,18)
+                         (6,20)(7,19)(8,22)(9,18)(10,17)};
+          \draw[dashed, TIRed, thick] (axis cs:0.5,35) -- (axis cs:10.5,35)
+            node[right, font=\tiny, TIRed]{alert};
+        \end{axis}
+      \end{tikzpicture}
+
+      \vspace{0.1cm}
+      \begin{block}{\scriptsize \faChartLine~Metrics Tracked}
+        \begin{itemize}\scriptsize
+          \item Inference latency per frame (ms)
+          \item Throughput (FPS) — rolling average
+          \item Detection confidence score distribution
+          \item Detection count per frame
+          \item DDR bandwidth utilisation (\%)
+        \end{itemize}
+      \end{block}
+
+      \begin{tikzpicture}
+        \begin{axis}[
+          title={\scriptsize Confidence Score Distribution},
+          xlabel={\scriptsize Score bin}, ylabel={\scriptsize Count},
+          ymin=0, xmin=0, xmax=1.05,
+          width=6.2cm, height=2.6cm,
+          grid=major, grid style={TIGray},
+          tick label style={font=\tiny},
+          label style={font=\scriptsize},
+          title style={font=\scriptsize\bfseries},
+          ybar interval, bar width=5pt,
+        ]
+          \addplot[fill=TIGreen!70]
+            coordinates {(0.0,5)(0.1,8)(0.2,12)(0.3,20)(0.4,35)
+                         (0.5,60)(0.6,75)(0.7,55)(0.8,40)(0.9,25)(1.0,0)};
+          \draw[dashed, TIRed, thick] (axis cs:0.3,0) -- (axis cs:0.3,80)
+            node[above, font=\tiny, TIRed]{drift threshold};
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE M7: MLOps Code Structure
+%--------------------------------------------------------------
+\begin{frame}{MLOps Code Structure}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{tikzpicture}[scale=0.88,
+        dir/.style={draw=TIBlue, fill=TIBlue!10, rounded corners=3pt,
+                    inner sep=3pt, font=\ttfamily\scriptsize},
+        fil/.style={draw=TIDark!40, fill=TIGray, rounded corners=2pt,
+                    inner sep=3pt, font=\ttfamily\scriptsize},
+        ln/.style={TIDark!50, thin}
+      ]
+        \node[dir, minimum width=3.8cm] (root) at (0,6.2) {code/};
+
+        \node[dir] (cfg)  at (0.4,5.3) {config/};
+        \node[fil] (cfg1) at (1.0,4.6) {pipeline\_config.yaml};
+        \node[fil] (cfg2) at (1.0,4.0) {model\_registry.yaml};
+
+        \node[dir] (ml)   at (0.4,3.2) {mlops/};
+        \node[fil] (ml1)  at (1.0,2.55){model\_manager.py};
+        \node[fil] (ml2)  at (1.0,1.95){data\_pipeline.py};
+        \node[fil] (ml3)  at (1.0,1.35){evaluator.py};
+        \node[fil] (ml4)  at (1.0,0.75){artifact\_manager.py};
+        \node[fil] (ml5)  at (1.0,0.15){monitor.py};
+
+        \node[dir] (pp)   at (0.4,-0.7) {pipelines/};
+        \node[fil] (pp1)  at (1.0,-1.3) {train\_pipeline.py};
+        \node[fil] (pp2)  at (1.0,-1.9) {eval\_pipeline.py};
+        \node[fil] (pp3)  at (1.0,-2.5) {deploy\_pipeline.py};
+
+        \node[dir] (gh)   at (0.4,-3.3) {.github/workflows/};
+        \node[fil] (gh1)  at (1.0,-3.9) {mlops\_ci.yml};
+
+        \draw[ln] (root.south) -- ++(0,-0.25) -| (cfg.north);
+        \draw[ln] (root.south) -- ++(0,-0.25) -| (ml.north);
+        \draw[ln] (root.south) -- ++(0,-0.25) -| (pp.north);
+        \draw[ln] (root.south) -- ++(0,-0.25) -| (gh.north);
+
+        \foreach \p/\c in {cfg/cfg1,cfg/cfg2,ml/ml1,ml/ml2,ml/ml3,ml/ml4,ml/ml5,
+                           pp/pp1,pp/pp2,pp/pp3,gh/gh1}
+          \draw[ln] (\p.south) -- ++(0,-0.05) -| (\c.west);
+      \end{tikzpicture}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{block}{\faInfoCircle~Module Responsibilities}
+        \begin{itemize}\scriptsize
+          \item \texttt{model\_manager.py} — Download, register, retrieve model artifacts
+          \item \texttt{data\_pipeline.py} — Task-specific preprocessing + dataloaders
+          \item \texttt{evaluator.py} — Accuracy gates, metric computation, CSV export
+          \item \texttt{artifact\_manager.py} — Pack/unpack TIDL artifact bundles
+          \item \texttt{monitor.py} — Runtime latency, FPS, drift detection
+          \item \texttt{train\_pipeline.py} — End-to-end train→export→compile
+          \item \texttt{eval\_pipeline.py} — Benchmark + CI gate checking
+          \item \texttt{deploy\_pipeline.py} — Package + push to EVM target
+          \item \texttt{mlops\_ci.yml} — GitHub Actions CI/CD workflow
+        \end{itemize}
+      \end{block}
+
+      \vspace{0.3cm}
+      \begin{alertblock}{\faTerminal~Run the Full Pipeline}
+        \lstset{basicstyle=\ttfamily\tiny, backgroundcolor=\color{TIGray},
+                frame=none}
+        \begin{lstlisting}
+python pipelines/train_pipeline.py \
+  --config config/pipeline_config.yaml \
+  --soc AM68A \
+  --task detection \
+  --model yolox-s-lite
+        \end{lstlisting}
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%==============================================================
 \section{Summary}
 %==============================================================
 
