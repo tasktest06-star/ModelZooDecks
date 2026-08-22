@@ -125,10 +125,10 @@
 \begin{frame}{Agenda}
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
-      \tableofcontents[sections={1-5}]
+      \tableofcontents[sections={1-6}]
     \end{column}
     \begin{column}{0.48\textwidth}
-      \tableofcontents[sections={6-10}]
+      \tableofcontents[sections={7-11}]
     \end{column}
   \end{columns}
 \end{frame}
@@ -1368,6 +1368,391 @@ de-7300     (onnxrt depth)
 \end{frame}
 
 %==============================================================
+\section{Device Compatibility \& Tutorials}
+%==============================================================
+
+%--------------------------------------------------------------
+% SLIDE: Device Specs
+%--------------------------------------------------------------
+\begin{frame}{Compatible Devices --- Hardware Specifications}
+  \centering
+  \scriptsize
+  \begin{tabular}{p{1.4cm}p{2.8cm}p{2.2cm}rp{2.0cm}p{2.2cm}}
+    \toprule
+    \textbf{SoC} & \textbf{CPU Cores} & \textbf{AI Accelerator} & \textbf{TOPS} & \textbf{EVM Board} & \textbf{SDK} \\
+    \midrule
+    \rowcolor{TIRed!15}
+    \textbf{\textcolor{TIRed}{TDA4VM}} &
+      2$\times$ A72 + 6$\times$ R5F + 2$\times$ C7x DSP + C66x &
+      MMA (matrix accel.) & \textbf{8} &
+      J721E EVM / TDA4VM SK &
+      PROCESSOR-SDK-J721E \\[3pt]
+
+    \rowcolor{TIBlue!10}
+    \textbf{\textcolor{TIBlue}{AM62A}} &
+      4$\times$ A53 + M4F &
+      1$\times$ C7x + MMA & \textbf{1} &
+      SK-AM62A-LP &
+      EdgeAI SDK (PSDK Linux AM62A) \\[3pt]
+
+    \rowcolor{TIBlue!18}
+    \textbf{\textcolor{TIBlue!80}{AM67A}} &
+      4$\times$ A53 + 2$\times$ R5F &
+      1$\times$ C7x + MMA & \textbf{2} &
+      SK-AM67A &
+      EdgeAI SDK (PSDK Linux AM67A) \\[3pt]
+
+    \rowcolor{TIGreen!12}
+    \textbf{\textcolor{TIGreen}{AM68A}} &
+      2$\times$ A72 + 6$\times$ R5F &
+      2$\times$ C7x + MMA & \textbf{8} &
+      SK-AM68A &
+      EdgeAI SDK (PSDK Linux AM68A) \\[3pt]
+
+    \rowcolor{TIOrange!12}
+    \textbf{\textcolor{TIOrange}{AM69A}} &
+      4$\times$ A72 + 8$\times$ R5F &
+      4$\times$ C7x + MMA & \textbf{32} &
+      SK-AM69A &
+      EdgeAI SDK (PSDK Linux AM69A) \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.35cm}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{tikzpicture}
+        \begin{axis}[
+          title={\scriptsize AI Performance (TOPS)},
+          symbolic x coords={TDA4VM, AM62A, AM67A, AM68A, AM69A},
+          xtick=data,
+          xticklabel style={font=\tiny, rotate=20, anchor=east},
+          ymin=0, ymax=36,
+          width=5.8cm, height=3.6cm,
+          bar width=10pt,
+          ybar,
+          grid=major, grid style={TIGray},
+          ylabel={\scriptsize TOPS},
+          ylabel style={font=\scriptsize},
+          title style={font=\scriptsize\bfseries},
+          tick label style={font=\tiny},
+          nodes near coords,
+          nodes near coords style={font=\tiny\bfseries},
+        ]
+          \addplot[fill={TIRed!70}]   coordinates {(TDA4VM,8)};
+          \addplot[fill={TIBlue!60}]  coordinates {(AM62A,1)};
+          \addplot[fill={TIBlue!80}]  coordinates {(AM67A,2)};
+          \addplot[fill={TIGreen!70}] coordinates {(AM68A,8)};
+          \addplot[fill={TIOrange!80}]coordinates {(AM69A,32)};
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{\scriptsize Key Shared Architecture}
+        \begin{itemize}\scriptsize
+          \item All SoCs run \textbf{TIDL} for DNN acceleration
+          \item \textbf{MMA} handles convolution / matrix multiply
+          \item \textbf{C7x DSP} handles activation, pooling, element-wise ops
+          \item \textbf{ARM cores} handle pre/post-processing
+          \item All support \textbf{INT8} inference from Model Zoo artifacts
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE: Model-Device Compatibility Matrix
+%--------------------------------------------------------------
+\begin{frame}{Model--Device Compatibility Matrix}
+  \centering
+  \footnotesize
+
+  \begin{tikzpicture}[scale=0.9,
+    hdr/.style={fill=TIDark, text=white, font=\scriptsize\bfseries,
+                inner sep=4pt, minimum height=0.55cm},
+    cel/.style={inner sep=3pt, minimum height=0.55cm, minimum width=1.5cm,
+                font=\scriptsize, align=center},
+    yes/.style={cel, fill=TIGreen!25, text=TIGreen!80!black, font=\scriptsize\bfseries},
+    par/.style={cel, fill=TIOrange!25, text=TIOrange!80!black, font=\scriptsize\bfseries},
+    no/.style={cel,  fill=TIRed!15,   text=TIRed!60, font=\scriptsize},
+  ]
+
+    % Headers — SoCs
+    \node[hdr, minimum width=3.2cm] at (0,    4.4) {Task / Model Family};
+    \node[hdr, minimum width=1.6cm, fill=TIRed!80]   at (3.1,  4.4) {TDA4VM};
+    \node[hdr, minimum width=1.6cm, fill=TIBlue!70]  at (4.75, 4.4) {AM62A};
+    \node[hdr, minimum width=1.6cm, fill=TIBlue!85]  at (6.40, 4.4) {AM67A};
+    \node[hdr, minimum width=1.6cm, fill=TIGreen!70] at (8.05, 4.4) {AM68A};
+    \node[hdr, minimum width=1.6cm, fill=TIOrange!80]at (9.70, 4.4) {AM69A};
+
+    % Row helper macro: \row{y}{label}{tda}{am62}{am67}{am68}{am69}
+    % Using manual nodes for clarity
+    \foreach \y/\lbl/\a/\b/\c/\d/\e in {
+      3.70/{Classification (CNN)}/yes/yes/yes/yes/yes,
+      3.05/{Classification (Transformer)}/par/no/par/yes/yes,
+      2.40/{Object Detection (YOLOX)}/yes/par/yes/yes/yes,
+      1.75/{Object Detection (DETR)}/par/no/par/yes/yes,
+      1.10/{Semantic Segmentation}/yes/yes/yes/yes/yes,
+      0.45/{Depth Estimation}/yes/yes/yes/yes/yes,
+      -0.20/{Keypoint / Pose}/yes/par/yes/yes/yes,
+      -0.85/{3D Detection (BEV)}/par/no/par/yes/yes,
+      -1.50/{6D Pose Estimation}/yes/par/yes/yes/yes
+    }{
+      \node[cel, text=TIDark, minimum width=3.2cm, fill=TIGray, align=left,
+            inner sep=4pt] at (0, \y) {\lbl};
+      \node[\a, minimum width=1.6cm] at (3.1,  \y) {$\checkmark$};
+      \node[\b, minimum width=1.6cm] at (4.75, \y)
+        {\ifx\b yes$\checkmark$\else\ifx\b par\textasciitilde\else$\times$\fi\fi};
+      \node[\c, minimum width=1.6cm] at (6.40, \y)
+        {\ifx\c yes$\checkmark$\else\ifx\c par\textasciitilde\else$\times$\fi\fi};
+      \node[\d, minimum width=1.6cm] at (8.05, \y)
+        {\ifx\d yes$\checkmark$\else\ifx\d par\textasciitilde\else$\times$\fi\fi};
+      \node[\e, minimum width=1.6cm] at (9.70, \y)
+        {\ifx\e yes$\checkmark$\else\ifx\e par\textasciitilde\else$\times$\fi\fi};
+    }
+
+    % Legend
+    \node[yes, rounded corners=3pt, draw=TIGreen!50] at (3.1,  -2.25) {$\checkmark$ Full support};
+    \node[par, rounded corners=3pt, draw=TIOrange!50] at (6.40, -2.25) {\textasciitilde\ Limited / high-end models only};
+    \node[no,  rounded corners=3pt, draw=TIRed!40]   at (9.70, -2.25) {$\times$ Not recommended};
+  \end{tikzpicture}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE: Recommended Models Per Device
+%--------------------------------------------------------------
+\begin{frame}{Recommended Model Configurations Per Device}
+  \scriptsize
+  \begin{tabular}{p{1.5cm}p{1.5cm}p{3.4cm}p{3.4cm}p{2.2cm}}
+    \toprule
+    \textbf{SoC} & \textbf{TOPS} & \textbf{Recommended Models} & \textbf{Use Case} & \textbf{Typical FPS} \\
+    \midrule
+    \rowcolor{TIRed!12}
+    \textcolor{TIRed}{\textbf{TDA4VM}} & 8 &
+      YOLOX-s/m-lite, FPNLite-Seg, MobileNetV2, FastBEV-r18 &
+      ADAS: object detect + lane seg & 30--60 FPS \\[3pt]
+
+    \rowcolor{TIBlue!10}
+    \textcolor{TIBlue}{\textbf{AM62A}} & 1 &
+      MobileNetV3Lite-Small/Large, YOLOX-nano-lite, DeepLabV3Lite-MV2 &
+      Low-power edge: classify + light detection & 10--30 FPS \\[3pt]
+
+    \rowcolor{TIBlue!18}
+    \textcolor{TIBlue!80}{\textbf{AM67A}} & 2 &
+      MobileNetV2, YOLOX-tiny-lite, FPNLite-Seg, YOLOXPose-tiny &
+      Industrial: detect + segment + pose & 20--45 FPS \\[3pt]
+
+    \rowcolor{TIGreen!12}
+    \textcolor{TIGreen}{\textbf{AM68A}} & 8 &
+      YOLOX-l-lite, Swin-Tiny, SegFormer-B0, FastBEV-r34, YOLOXPose-s &
+      Robotics / multi-camera AI & 30--60 FPS \\[3pt]
+
+    \rowcolor{TIOrange!12}
+    \textcolor{TIOrange}{\textbf{AM69A}} & 32 &
+      Swin-Large, YOLOX-x-lite, RTMDet-l, BEVFormer-tiny, YOLOX-s-pose &
+      High-throughput: all tasks simultaneously & 60+ FPS \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.25cm}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{\scriptsize \faLightbulb~Selection Tip}
+        \scriptsize Use \textbf{Edge AI Studio} (ti.com/tool/EDGE-AI-STUDIO)
+        to interactively filter models by SoC, latency budget, and accuracy
+        threshold --- no hardware needed for initial evaluation.
+      \end{alertblock}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{exampleblock}{\scriptsize \faCloud~No Hardware? Use EVM Cloud}
+        \scriptsize TI's \textbf{EVM Cloud/Farm} at \texttt{dev.ti.com/edgeai}
+        lets you run compiled artifacts on real TI hardware remotely
+        --- no EVM board required.
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE: Three Deployment Paths
+%--------------------------------------------------------------
+\begin{frame}{Three Paths to Deploy Models on TI Hardware}
+  \begin{tikzpicture}[scale=0.88,
+    path/.style={rounded corners=7pt, minimum width=3.6cm, minimum height=3.8cm,
+                 align=center, draw, thick, drop shadow, inner sep=6pt},
+    step/.style={rounded corners=3pt, fill=white, draw=TIDark!40,
+                 minimum width=3.0cm, inner sep=3pt, font=\scriptsize, align=center},
+    arr/.style={->, >=Stealth, thick}
+  ]
+    % Path 1: Edge AI Studio (web)
+    \node[path, fill=TIBlue!15, draw=TIBlue] (p1) at (-4.5, 0.5) {};
+    \node[font=\small\bfseries, TIBlue] at (-4.5, 2.15)
+      {\faGlobe~Path 1: Edge AI Studio};
+    \node[step, fill=TIBlue!10] at (-4.5, 1.35) {Browse \& filter models\\by SoC + task};
+    \node[step, fill=TIBlue!10] at (-4.5, 0.45) {View FPS / latency /\\accuracy tradeoffs};
+    \node[step, fill=TIBlue!10] at (-4.5, -0.45) {Download compiled\\artifact (.tar.gz)};
+    \node[font=\tiny\itshape, TIBlue] at (-4.5, -1.15) {ti.com/tool/EDGE-AI-STUDIO};
+
+    % Path 2: edgeai-tidlrunner (CLI)
+    \node[path, fill=TIGreen!15, draw=TIGreen] (p2) at (0, 0.5) {};
+    \node[font=\small\bfseries, TIGreen] at (0, 2.15)
+      {\faTerminal~Path 2: edgeai-tidlrunner};
+    \node[step, fill=TIGreen!10] at (0, 1.35) {Clone edgeai-tidlrunner\\+ modelzoo configs};
+    \node[step, fill=TIGreen!10] at (0, 0.45) {Run compile + benchmark\\(PC emulation or EVM)};
+    \node[step, fill=TIGreen!10] at (0, -0.45) {Deploy compiled\\binary to EVM board};
+    \node[font=\tiny\itshape, TIGreen] at (0, -1.15) {github.com/TexasInstruments/edgeai-tidlrunner};
+
+    % Path 3: PSDK RTOS (full SDK)
+    \node[path, fill=TIOrange!15, draw=TIOrange] (p3) at (4.5, 0.5) {};
+    \node[font=\small\bfseries, TIOrange] at (4.5, 2.15)
+      {\faMicrochip~Path 3: PROCESSOR-SDK-RTOS};
+    \node[step, fill=TIOrange!10] at (4.5, 1.35) {Install PROCESSOR-SDK\\-J721E (TDA4VM)};
+    \node[step, fill=TIOrange!10] at (4.5, 0.45) {Integrate TIDL runtime\\into RTOS application};
+    \node[step, fill=TIOrange!10] at (4.5, -0.45) {Deploy full\\automotive pipeline};
+    \node[font=\tiny\itshape, TIOrange] at (4.5, -1.15) {ti.com/tool/PROCESSOR-SDK-J721E};
+
+    % Bottom bar
+    \node[rounded corners=4pt, fill=TIDark, text=white, minimum width=12cm,
+          inner sep=5pt, font=\scriptsize\bfseries] at (0, -2.1)
+      {All three paths use the same pre-compiled INT8 artifacts from edgeai-modelzoo};
+  \end{tikzpicture}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE: Tutorial & Reference Links
+%--------------------------------------------------------------
+\begin{frame}{Tutorial \& Reference Links}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+
+      \begin{block}{\faBook~Official Documentation}
+        \begin{itemize}\scriptsize
+          \item \textbf{EdgeAI Landing Page}\\
+                \url{https://www.ti.com/edgeai}
+          \item \textbf{Edge AI Studio (Model Selection Tool)}\\
+                \url{https://www.ti.com/tool/EDGE-AI-STUDIO}
+          \item \textbf{PROCESSOR-SDK-J721E (TDA4VM SDK)}\\
+                \url{https://www.ti.com/tool/PROCESSOR-SDK-J721E}
+          \item \textbf{PSDK-RTOS-J721E User Guide}\\
+                {\tiny\url{https://software-dl.ti.com/jacinto7/esd/processor-sdk-rtos-jacinto7/latest/exports/docs/}}
+          \item \textbf{EVM Cloud / Remote Hardware Farm}\\
+                \url{https://dev.ti.com/edgeai}
+        \end{itemize}
+      \end{block}
+
+      \vspace{0.2cm}
+      \begin{block}{\faGraduationCap~TI Training Courses}
+        \begin{itemize}\scriptsize
+          \item \textbf{Jacinto 7 Processors in Automotive}\\
+                \url{https://training.ti.com/jacinto7}
+          \item \textbf{Jacinto 7 Software Overview}\\
+                \url{https://training.ti.com/jacinto7-software}
+          \item \textbf{TI YouTube: Jacinto 7 Video Series}\\
+                {\tiny\url{https://www.youtube.com/playlist?list=PLISmVLHAZbTRkVcGm3Bkkzx7Z2vFsM_zb}}
+        \end{itemize}
+      \end{block}
+
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+
+      \begin{exampleblock}{\faGithub~GitHub Repositories}
+        \begin{itemize}\scriptsize
+          \item \textbf{edgeai-modelzoo} (this repo)\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai-modelzoo}}
+          \item \textbf{edgeai-benchmark} (accuracy + FPS eval)\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai-benchmark}}
+          \item \textbf{edgeai-tidl-tools} (TIDL compiler + firmware)\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai-tidl-tools}}
+          \item \textbf{edgeai-tidlrunner} (CLI compile + benchmark)\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai-tidlrunner}}
+          \item \textbf{Supported SoCs List (readme\_sdk.md)}\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai/blob/main/readme_sdk.md}}
+          \item \textbf{edgeai-torchvision} (classification training)\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai-torchvision}}
+          \item \textbf{QAT Tutorial}\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai-torchvision/blob/master/docs/pixel2pixel/Quantization.md}}
+          \item \textbf{edgeai-mmdetection} (detection training)\\
+                {\tiny\url{https://github.com/TexasInstruments/edgeai-mmdetection}}
+        \end{itemize}
+      \end{exampleblock}
+
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%--------------------------------------------------------------
+% SLIDE: Getting Started Step-by-Step
+%--------------------------------------------------------------
+\begin{frame}{Getting Started --- Step-by-Step Quickstart}
+  \begin{tikzpicture}[scale=0.85,
+    step/.style={rounded corners=6pt, minimum width=2.4cm, minimum height=1.5cm,
+                 align=center, draw, thick, font=\small, inner sep=5pt, drop shadow},
+    arr/.style={->, >=Stealth, very thick, TIDark}
+  ]
+    % Step nodes
+    \node[step, fill=TIBlue!20, draw=TIBlue] (s1) at (-5.5, 1.5)
+      {\textbf{1}\\\scriptsize Clone\\edgeai-modelzoo};
+
+    \node[step, fill=TIBlue!15, draw=TIBlue!70] (s2) at (-2.8, 1.5)
+      {\textbf{2}\\\scriptsize Run\\download script};
+
+    \node[step, fill=TIOrange!20, draw=TIOrange] (s3) at (0, 1.5)
+      {\textbf{3}\\\scriptsize Browse models\\in Edge AI Studio};
+
+    \node[step, fill=TIGreen!20, draw=TIGreen] (s4) at (2.8, 1.5)
+      {\textbf{4}\\\scriptsize Compile with\\edgeai-tidlrunner};
+
+    \node[step, fill=TIRed!20, draw=TIRed] (s5) at (5.5, 1.5)
+      {\textbf{5}\\\scriptsize Deploy to\\EVM board};
+
+    \draw[arr] (s1) -- (s2);
+    \draw[arr] (s2) -- (s3);
+    \draw[arr] (s3) -- (s4);
+    \draw[arr] (s4) -- (s5);
+
+    % Detail boxes below each step
+    \node[rounded corners=3pt, fill=TIGray, draw=TIDark!30,
+          minimum width=2.4cm, inner sep=4pt,
+          font=\tiny, align=center] at (-5.5, 0)
+      {\texttt{git clone}\\\texttt{TexasInstruments/}\\\texttt{edgeai-modelzoo}};
+
+    \node[rounded corners=3pt, fill=TIGray, draw=TIDark!30,
+          minimum width=2.4cm, inner sep=4pt,
+          font=\tiny, align=center] at (-2.8, 0)
+      {\texttt{./run\_download}\\\texttt{\_modelartifacts}\\\texttt{.sh}};
+
+    \node[rounded corners=3pt, fill=TIGray, draw=TIDark!30,
+          minimum width=2.4cm, inner sep=4pt,
+          font=\tiny, align=center] at (0, 0)
+      {Filter by SoC,\\task, TOPS, FPS\\at ti.com/tool/\\EDGE-AI-STUDIO};
+
+    \node[rounded corners=3pt, fill=TIGray, draw=TIDark!30,
+          minimum width=2.4cm, inner sep=4pt,
+          font=\tiny, align=center] at (2.8, 0)
+      {Use modelzoo\\configs in\\edgeai-tidlrunner\\data/configs/};
+
+    \node[rounded corners=3pt, fill=TIGray, draw=TIDark!30,
+          minimum width=2.4cm, inner sep=4pt,
+          font=\tiny, align=center] at (5.5, 0)
+      {Flash artifact to\\SK-AM68A /\\SK-AM69A /\\J721E EVM};
+
+    % No-HW shortcut
+    \draw[arr, dashed, TIBlue!60, bend left=25]
+      (s3.south) to node[below, font=\tiny\itshape, TIBlue]{No hardware? Use dev.ti.com/edgeai} (s5.south);
+
+    % Bottom note
+    \node[rounded corners=4pt, fill=TIDark!10, draw=TIDark!40,
+          minimum width=13cm, inner sep=5pt, font=\scriptsize]
+          at (0, -1.5)
+      {\faBook~Full SDK docs:
+       \texttt{software-dl.ti.com/jacinto7/esd/processor-sdk-rtos-jacinto7/latest/}
+       \quad \faGithub~\texttt{TexasInstruments/edgeai}};
+  \end{tikzpicture}
+\end{frame}
+
+%==============================================================
 \section{Summary}
 %==============================================================
 
@@ -1508,15 +1893,19 @@ de-7300     (onnxrt depth)
     {\color{TIGray}\normalsize 180+ models $\cdot$ 8 tasks $\cdot$ 5 SoCs $\cdot$ INT8 ready}\\[0.8cm]
 
     \begin{tikzpicture}
-      \node[rounded corners=6pt, fill=TIBlue, text=white, inner sep=10pt,
-            font=\small\bfseries]{
+      \node[rounded corners=6pt, fill=TIBlue, text=white, inner sep=8pt,
+            font=\small\bfseries, align=center]{
         \faGithub~TexasInstruments/edgeai-modelzoo \quad
-        \faGlobe~ti.com/tool/EDGE-AI-STUDIO
+        \faGlobe~ti.com/tool/EDGE-AI-STUDIO\\[3pt]
+        \faCloud~dev.ti.com/edgeai \quad
+        \faGraduationCap~training.ti.com/jacinto7
       };
-    \end{tikzpicture}\\[0.5cm]
+    \end{tikzpicture}\\[0.4cm]
 
     {\color{TIGray}\footnotesize
-    For questions, refer to the edgeai-benchmark and edgeai-tidl-tools repositories.}
+    Supported SoCs: TDA4VM $\cdot$ AM62A $\cdot$ AM67A $\cdot$ AM68A $\cdot$ AM69A
+    (1--32 TOPS, INT8 artifacts ready)\\
+    SDK: PROCESSOR-SDK-J721E $\cdot$ EdgeAI SDK (PSDK Linux AM6xA family)}
   \end{center}
 \end{frame}
 
