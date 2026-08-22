@@ -12,13 +12,11 @@ from aws_cdk import (
 )
 from constructs import Construct
 from stacks.storage_stack import StorageStack
-from stacks.compute_stack import ComputeStack
 
 
 class PipelineStack(Stack):
     def __init__(self, scope: Construct, construct_id: str,
                  storage_stack: StorageStack,
-                 compute_stack: ComputeStack,
                  **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 

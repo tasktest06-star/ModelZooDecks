@@ -1,4 +1,4 @@
-"""Optuna HPO for TI EdgeAI Model Zoo compilation parameter search."""
+"""Optuna HPO for ADI AI8X QAT hyperparameter search."""
 
 import json
 from pathlib import Path
@@ -12,19 +12,8 @@ except ImportError:
     OPTUNA_AVAILABLE = False
 
 
-def _dummy_trial_fn(trial):
-    return 0.0
-
-
-class TIDLHPORunner:
-    """Optuna-based HPO for TIDL compilation hyperparameters."""
-
-    PARAM_SPACE = {
-        "tensor_bits": (8, 16),
-        "num_calib_frames": (50, 500),
-        "calib_accuracy_threshold": (0.5, 1.0),
-        "max_num_subgraphs": (1, 8),
-    }
+class QATHPORunner:
+    """Searches optimal QAT hyperparameters for AI8X models."""
 
     def __init__(self, study_name: str, storage: str = None, n_trials: int = 20):
         self.study_name = study_name
@@ -32,26 +21,23 @@ class TIDLHPORunner:
         self.n_trials = n_trials
 
     def _define_params(self, trial) -> dict:
-        if not OPTUNA_AVAILABLE:
-            return {}
         return {
-            "tensor_bits": trial.suggest_categorical("tensor_bits", [8, 16]),
-            "num_calib_frames": trial.suggest_int("num_calib_frames", 50, 500, step=50),
-            "calib_accuracy_threshold": trial.suggest_float(
-                "calib_accuracy_threshold", 0.5, 1.0
-            ),
-            "max_num_subgraphs": trial.suggest_int("max_num_subgraphs", 1, 8),
+            "weight_bits": trial.suggest_categorical("weight_bits", [4, 8]),
+            "bias_bits": trial.suggest_categorical("bias_bits", [8]),
+            "act_bits": trial.suggest_categorical("act_bits", [8]),
+            "learning_rate": trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True),
+            "batch_size": trial.suggest_categorical("batch_size", [32, 64, 128]),
+            "weight_decay": trial.suggest_float("weight_decay", 1e-5, 1e-3, log=True),
+            "qat_epochs": trial.suggest_int("qat_epochs", 5, 30),
         }
 
     def run(self, objective_fn: Callable[[dict], float],
             direction: str = "maximize") -> dict:
-        """Run HPO. objective_fn receives param dict and returns metric float."""
         if not OPTUNA_AVAILABLE:
             return {"error": "optuna not installed", "best_params": {}, "best_value": 0.0}
 
-        def wrapped_objective(trial):
-            params = self._define_params(trial)
-            return objective_fn(params)
+        def wrapped(trial):
+            return objective_fn(self._define_params(trial))
 
         study = optuna.create_study(
             study_name=self.study_name,
@@ -59,7 +45,7 @@ class TIDLHPORunner:
             direction=direction,
             load_if_exists=True,
         )
-        study.optimize(wrapped_objective, n_trials=self.n_trials)
+        study.optimize(wrapped, n_trials=self.n_trials)
         return {
             "best_params": study.best_params,
             "best_value": study.best_value,

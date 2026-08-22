@@ -19,6 +19,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from typing import Optional
+
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -143,8 +145,6 @@ def _print_summary_table(results: list[dict], task: str) -> None:
         print(f"{r['model']:<30} {fp32_val:>14.2f} {int8_val:>14.2f} {drop:>7.2f}pp")
     print("─" * 70)
 
-
-from typing import Optional
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="TI EdgeAI Eval Pipeline")

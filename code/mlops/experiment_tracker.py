@@ -3,8 +3,6 @@
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
-
 import mlflow
 import mlflow.tracking
 
@@ -62,6 +60,9 @@ class ExperimentTracker:
             raise ValueError(
                 f"Model {model_name} failed gate: {metric_key}={metric_val:.4f} < {accuracy_gate}"
             )
+        # Log a minimal artifact so the model URI path exists before registration
+        with mlflow.start_run(run_id=run_id):
+            mlflow.log_dict({"model_name": model_name, "metric": metric_val}, "model/metadata.json")
         model_uri = f"runs:/{run_id}/model"
         result = mlflow.register_model(model_uri, model_name)
         client.set_registered_model_tag(model_name, "soc_validated", "true")

@@ -13,6 +13,12 @@ onnxruntime>=1.16
 # COCO evaluation (optional — enables full mAP in Evaluator)
 # pycocotools>=2.0
 
+# Experiment tracking & orchestration
+mlflow>=2.8.0
+prefect>=2.14.0
+optuna>=3.4.0
+evidently>=0.4.0
+
 # Testing
 pytest>=7.0
 

@@ -5,7 +5,6 @@ from aws_cdk.assertions import Template, Match
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from stacks.storage_stack import StorageStack
-from stacks.compute_stack import ComputeStack
 from stacks.pipeline_stack import PipelineStack
 
 
@@ -14,10 +13,8 @@ def template():
     app = cdk.App()
     env = cdk.Environment(account="123456789012", region="us-east-1")
     storage = StorageStack(app, "TestTiStorageForPipeline", env=env)
-    compute = ComputeStack(app, "TestTiComputeForPipeline", env=env)
     pipeline = PipelineStack(app, "TestTiPipelineStack",
                              storage_stack=storage,
-                             compute_stack=compute,
                              env=env)
     return Template.from_stack(pipeline)
 

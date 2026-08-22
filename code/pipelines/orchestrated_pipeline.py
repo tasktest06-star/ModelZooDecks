@@ -43,7 +43,12 @@ def evaluate_model_task(model_id: str, soc: str, task_type: str,
     with tracker.start_run(model_id=model_id, soc=soc, task=task_type) as run:
         evaluator = Evaluator(config_path)
         try:
-            results = evaluator.evaluate(model_id=model_id, soc=soc, n_samples=100)
+            raw = evaluator.run(model_id=model_id, soc=soc)
+            metrics = raw.get("metrics", {})
+            results = {
+                "top1_accuracy": metrics.get("top1", metrics.get("mAP", 0.0)) / 100.0,
+                **metrics,
+            }
         except Exception as e:
             logger.warning(f"Evaluation failed for {model_id}: {e}")
             results = {"error": str(e), "top1_accuracy": 0.0}
@@ -88,7 +93,7 @@ def ti_edgeai_eval_flow(
     config_path: str = "config/model_registry.yaml",
     soc: str = "AM68A",
     accuracy_gate: float = 0.68,
-    tracking_uri: str = "file:./mlruns",
+    tracking_uri: str = "sqlite:///mlflow.db",
     models: list = None,
 ):
     """Full TI EdgeAI evaluation + registration Prefect flow."""

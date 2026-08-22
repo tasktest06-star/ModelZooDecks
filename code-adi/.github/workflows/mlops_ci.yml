@@ -1,0 +1,261 @@
+name: ADI Model Zoo MLOps CI
+
+on:
+  push:
+    branches: [ analog-devices, develop ]
+  pull_request:
+    branches: [ main, analog-devices ]
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model name (e.g. feature_pyramid_net)"
+        required: false
+        default: ""
+      device:
+        description: "Target device (MAX78002 | MAX32690 | ADSP-SC835)"
+        required: false
+        default: "MAX78002"
+
+env:
+  PYTHON_VERSION: "3.10"
+  DEFAULT_DEVICE: "MAX78002"
+  DEFAULT_MODEL: "feature_pyramid_net"
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install linting deps
+        run: pip install flake8 pyyaml
+
+      - name: Lint Python files
+        run: |
+          flake8 code-adi/ \
+            --max-line-length=100 \
+            --ignore=E501,W503,E203 \
+            --exclude=code-adi/.github
+
+      - name: Validate YAML configs
+        run: |
+          python -c "
+          import yaml, glob, sys
+          errors = []
+          for f in glob.glob('code-adi/config/*.yaml'):
+              try:
+                  yaml.safe_load(open(f))
+                  print(f'  OK: {f}')
+              except Exception as e:
+                  errors.append(f'{f}: {e}')
+          if errors:
+              [print(e) for e in errors]
+              sys.exit(1)
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install test deps
+        run: pip install pytest pyyaml numpy
+
+      - name: Run unit tests
+        run: |
+          cd code-adi
+          python -m pytest tests/ -v --tb=short
+
+      - name: Smoke test — imports and preprocessing
+        run: |
+          cd code-adi
+          python -c "
+          from mlops.model_manager import ModelManager
+          from mlops.data_pipeline import preprocess_vision, preprocess_audio, preprocess_sensor
+          from mlops.evaluator import Evaluator, AccuracyGateError
+          from mlops.artifact_manager import ArtifactManager
+          from mlops.monitor import InferenceMonitor
+          import numpy as np
+
+          # Vision smoke
+          img = np.zeros((480, 640, 3), dtype='uint8')
+          for task, sz in [('image_classification',(32,32)), ('object_detection',(256,320))]:
+              out = preprocess_vision(img, task, input_size=sz)
+              assert out.ndim == 4, f'{task} NCHW expected, got {out.shape}'
+
+          # Audio smoke
+          audio = np.zeros(16000, dtype='float32')
+          out = preprocess_audio(audio, 'keyword_spotting')
+          assert out.ndim == 3
+
+          # Sensor smoke
+          sig = np.zeros((256, 3), dtype='float32')
+          out = preprocess_sensor(sig, 'motor_fault_detection')
+          assert out.shape == (1, 256, 3)
+
+          print('All imports and preprocessing OK.')
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  evaluate:
+    name: Evaluate — ${{ matrix.domain }}/${{ matrix.task }}
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    strategy:
+      matrix:
+        include:
+          - domain: vision
+            task: object_detection
+            model: feature_pyramid_net
+            device: MAX78002
+          - domain: vision
+            task: image_classification
+            model: mobilenetv2_075
+            device: MAX78002
+          - domain: audio
+            task: keyword_spotting
+            model: ds_cnn
+            device: MAX32690
+          - domain: sensor
+            task: motor_fault_detection
+            model: autoencoder_motor
+            device: MAX78002
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pyyaml numpy
+
+      - name: Run evaluation — ${{ matrix.model }}
+        run: |
+          cd code-adi
+          python pipelines/eval_pipeline.py \
+            --config config/pipeline_config.yaml \
+            --model "${{ matrix.model }}" \
+            --device "${{ matrix.device }}" \
+            --domain "${{ matrix.domain }}" \
+            --task   "${{ matrix.task }}" \
+            --check-gates
+
+      - name: Upload eval report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: eval-${{ matrix.model }}-${{ matrix.device }}
+          path: code-adi/reports/eval_*.json
+          retention-days: 30
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  validate-registry:
+    name: Validate Model Registry
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pyyaml jsonschema
+
+      - name: Validate registry YAML
+        run: |
+          cd code-adi
+          python -c "
+          import yaml, sys
+          with open('config/model_registry.yaml') as f:
+              reg = yaml.safe_load(f)
+          models = reg.get('models', {})
+          print(f'Registry: {len(models)} models')
+          errors = []
+          required = ['task', 'domain', 'format', 'model_path', 'weight_file', 'supported_devices']
+          for name, meta in models.items():
+              for field in required:
+                  if field not in meta and field != 'weight_file':
+                      errors.append(f'{name}: missing {field}')
+              if not meta.get('supported_devices'):
+                  errors.append(f'{name}: no supported_devices')
+          if errors:
+              [print(f'  ERROR: {e}') for e in errors]
+              sys.exit(1)
+          print('Registry validation PASS')
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  package-artifacts:
+    name: Package Deployment Bundle
+    runs-on: ubuntu-latest
+    needs: [evaluate, validate-registry]
+    if: github.ref == 'refs/heads/analog-devices'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pyyaml numpy
+
+      - name: Run deploy pipeline (local bundle)
+        run: |
+          cd code-adi
+          python pipelines/deploy_pipeline.py \
+            --config config/pipeline_config.yaml \
+            --model "${{ github.event.inputs.model || env.DEFAULT_MODEL }}" \
+            --device "${{ github.event.inputs.device || env.DEFAULT_DEVICE }}" \
+            --target local
+
+      - name: Upload deployment bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: deploy-bundle-adi
+          path: code-adi/deployed/*.tar.gz
+          retention-days: 90
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Trigger QAT retrain if accuracy gates fail
+  trigger-qat-retrain:
+    name: Trigger QAT Retrain
+    runs-on: ubuntu-latest
+    needs: evaluate
+    if: failure()
+
+    steps:
+      - name: QAT retrain notification
+        run: |
+          echo "Accuracy gate failed on ${{ github.sha }}"
+          echo "ACTION: Set training.qat=true and increase training.epochs."
+          echo "        Re-run train_pipeline.py --stage all"
+          echo ""
+          echo "For AI8X models, also verify:"
+          echo "  1. qat_start_epoch is not too late"
+          echo "  2. weight_bits=8, bias_bits=8 in config"
+          echo "  3. ai8xize synthesis completed without errors"

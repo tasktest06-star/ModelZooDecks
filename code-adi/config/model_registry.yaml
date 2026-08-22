@@ -1,0 +1,352 @@
+models:
+  # ── Vision: Image Classification ────────────────────────────────────────────
+  efficientnetv2:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: ai8x
+    input_size: [112, 112]
+    input_channels: 3
+    num_classes: 1000
+    dataset: imagenet
+    weight_file: "ai87-imagenet-effnet2-q.pth.tar"
+    net_def: null
+    model_path: "vision_models/image_classification/efficientnet/data/model"
+    size_mb: 19.9
+    precision: float32
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      top1_reported: 0.6197
+    status: production
+
+  mobilenetv2_075:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: ai8x
+    input_size: [32, 32]
+    input_channels: 3
+    num_classes: 100
+    dataset: cifar100
+    weight_file: "ai87-cifar100-mobilenet-v2-0.75-qat8-q.pth.tar"
+    net_def: "ai87net-mobilenet-v2.py"
+    model_path: "vision_models/image_classification/mobilenetv2/data/model"
+    size_mb: 10.5
+    precision: int8
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      top1_reported: 0.6471
+    status: production
+
+  mobilenetv2_050:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: ai8x
+    input_size: [32, 32]
+    input_channels: 3
+    num_classes: 100
+    dataset: cifar100
+    weight_file: "ai87-cifar100-mobilenet-v2-0.5-qat8-q.pth.tar"
+    net_def: "ai87net-mobilenet-v2.py"
+    model_path: "vision_models/image_classification/mobilenetv2/data/model"
+    size_mb: 5.12
+    precision: int8
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      top1_reported: 0.62
+    status: production
+
+  simplenet:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: ai8x
+    input_size: [32, 32]
+    input_channels: 3
+    num_classes: 100
+    dataset: cifar100
+    weight_file: "ai85-cifar100-simplenetwide2x-qat-mixed-q.pth.tar"
+    net_def: "ai85net-simplenet-wide2x.py"
+    model_path: "vision_models/image_classification/simplenet/data/model"
+    size_mb: 8.40
+    precision: int8
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      top1_reported: 0.6030
+    status: production
+
+  # ── Vision: Segmentation ────────────────────────────────────────────────────
+  unet:
+    version: "1.0.0"
+    task: image_segmentation
+    domain: vision
+    format: ai8x
+    input_size: [48, 48]
+    input_channels: 48           # folded representation (fold_ratio=4, 3ch → 48ch)
+    num_classes: 2
+    dataset: aisegment
+    weight_file: "ai85-aisegment-unet-large-q.pth.tar"
+    net_def: "ai85net-unet.py"
+    model_path: "vision_models/image_segmentation/unet/data/model"
+    size_mb: 3.23
+    precision: int8
+    fold_ratio: 4
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      accuracy_reported: 0.9845
+    status: production
+
+  # ── Vision: Object Detection ────────────────────────────────────────────────
+  feature_pyramid_net:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: ai8x
+    input_size: [256, 320]
+    input_channels: 3
+    num_classes: 21
+    dataset: pascal_voc
+    weight_file: "ai87-pascalvoc-fpndetector-qat8-q.pth.tar"
+    net_def: "ai87-fpndetector.py"
+    model_path: "vision_models/object_detection/feature_pyramid_net/data/model"
+    size_mb: 25.16
+    precision: int8
+    nms:
+      min_score: 0.3
+      max_overlap: 0.3
+      top_k: 50
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      mAP_reported: 0.50512
+    status: production
+
+  tinierssd:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: ai8x
+    input_size: [120, 160]
+    input_channels: 3
+    num_classes: 2               # QR present / not present
+    dataset: bg20k_synthetic_qr
+    weight_file: "ai85-qrcode-tinierssd-kpts-qat8-q.pth.tar"
+    net_def: "ai85net_tinierssd_kpts_qr.py"
+    model_path: "vision_models/object_detection/tinierssd/data/model"
+    size_mb: 4.46
+    precision: int8
+    keypoints: 4                 # QR code corner keypoints
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      mAP_reported: 0.89960
+    status: production
+
+  # ── Vision: Visual Wake Word ─────────────────────────────────────────────────
+  micronet_vww2:
+    version: "2.0.0"
+    task: visual_wake_word
+    domain: vision
+    format: tflite
+    input_size: [50, 50]
+    input_channels: 1
+    num_classes: 2
+    dataset: visual_wake_words
+    weight_file: "vww2_50_50_INT8.tflite"
+    model_path: "vision_models/visual_wake_word/micronet_vww2_int8/data/model"
+    size_mb: 0.267
+    precision: int8
+    supported_devices:
+      - device: MAX32690
+        board: EvKit_V1
+        family: Cortex-M
+        core: CM4
+    metrics:
+      accuracy_reported: 0.768
+    status: production
+
+  # ── Audio: Denoising ─────────────────────────────────────────────────────────
+  dtln:
+    version: "1.0.0"
+    task: audio_denoising
+    domain: audio
+    format: tflite
+    sample_rate: 16000
+    frame_size: 512
+    hop_size: 256
+    weight_file:
+      - "model_float_1.tflite"
+      - "model_float_2.tflite"
+    model_path: "audio_models/audio_denoising/dtln/data/model"
+    size_mb: 3.78                # combined
+    precision: float32
+    stateful: true
+    num_states: 4
+    supported_devices:
+      - device: ADSP-SC835
+        board: ADSPSC835-EV-SOM
+        family: DSP
+    metrics:
+      PESQ_reported: 2.950
+    status: production
+
+  rnnoise:
+    version: "1.0.0"
+    task: audio_denoising
+    domain: audio
+    format: tflite
+    sample_rate: 16000
+    frame_size: 160              # 10ms at 16kHz
+    weight_file: "rnnoise_INT8.tflite"
+    model_path: "audio_models/audio_denoising/rnnoise/data/model"
+    size_mb: 0.107
+    precision: int8
+    stateful: true
+    num_states: 4
+    gru_units: [24, 48, 96]
+    supported_devices:
+      - device: MAX32690
+        board: EvKit_V1
+        family: Cortex-M
+        core: CM4
+    metrics:
+      PESQ_reported: 2.945
+    status: production
+
+  # ── Audio: Genre Identification ───────────────────────────────────────────────
+  genrenet_conv2d:
+    version: "1.0.0"
+    task: audio_genre_identification
+    domain: audio
+    format: pytorch
+    input_size: [128, 128]       # mel spectrogram
+    num_classes: 10
+    classes: [blues, classical, country, disco, hiphop, jazz, metal, pop, reggae, rock]
+    dataset: gtzan
+    weight_file: "net.pt"
+    model_path: "audio_models/audio_genre_identification/genrenet_conv2d/data/model"
+    size_mb: 15.304
+    precision: float32
+    supported_devices:
+      - device: ADSP-SC835
+        board: ADSPSC835-EV-SOM
+        family: DSP
+    metrics:
+      accuracy_reported: 0.8450
+    status: production
+
+  # ── Audio: Keyword Spotting ───────────────────────────────────────────────────
+  conv1d_audionet:
+    version: "1.0.0"
+    task: keyword_spotting
+    domain: audio
+    format: ai8x
+    input_size: [128, 128]
+    num_classes: 21              # 20 keywords + silence
+    dataset: google_speech_commands_v2
+    weight_file: "ai87-kws20_v3-qat8-q.pth.tar"
+    model_path: "audio_models/audio_keyword_spotting/conv1d_audionet/data/model"
+    size_mb: 1.785
+    precision: float32
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      accuracy_reported: 0.8634
+    status: production
+
+  ds_cnn:
+    version: "1.0.0"
+    task: keyword_spotting
+    domain: audio
+    format: tflite
+    input_size: [1, 490]
+    num_classes: 12
+    dataset: google_speech_commands_v2
+    weight_file: "ds_cnn_s_float32.tflite"
+    weight_file_int8: "ds_cnn_s_int8.tflite"
+    weight_file_int16: "ds_cnn_s_int16.tflite"
+    model_path: "audio_models/audio_keyword_spotting/ds_cnn/data/model"
+    size_mb: 0.097
+    size_mb_int8: 0.0465
+    precision: float32
+    supported_devices:
+      - device: MAX32690
+        board: EvKit_V1
+        family: Cortex-M
+        core: CM4
+      - device: ADSP-SC835
+        board: ADSPSC835-EV-SOM
+        family: DSP
+    metrics:
+      accuracy_reported: 0.9452
+    status: production
+
+  # ── Sensor: Anomaly Detection ─────────────────────────────────────────────────
+  autoencoder_anomaly:
+    version: "1.0.0"
+    task: anomaly_detection
+    domain: sensor
+    format: tflite
+    input_size: [196, 640]       # spectrogram frames
+    dataset: mimii
+    weight_files:
+      fan: "model_fan_quant.tflite"
+      pump: "model_pump_quant.tflite"
+      slider: "model_slider_quant.tflite"
+      valve: "model_valve_quant.tflite"
+    model_path: "sensor_models/anomaly_detection/autoencoder/data/model"
+    size_mb: 0.287
+    precision: float32
+    machine_types: [fan, pump, slider, valve]
+    supported_devices:
+      - device: MAX32690
+        board: EvKit_V1
+        family: Cortex-M
+        core: CM4
+    metrics:
+      AUC_reported: 0.516
+      pAUC_reported: 0.523
+    status: production
+
+  # ── Sensor: Motor Fault Detection ────────────────────────────────────────────
+  autoencoder_motor:
+    version: "1.0.0"
+    task: motor_fault_detection
+    domain: sensor
+    format: ai8x
+    input_size: [256, 3]         # 256-sample window, 3-axis vibration
+    dataset: adi_motor_limerick
+    weight_file: "ai85-autoencoder-samplemotordatalimerick-qat-q.pth.tar"
+    net_def: "ai85net-autoencoder.py"
+    model_path: "sensor_models/motor_fault_detection/autoencoder/data/model"
+    size_mb: 1.59
+    precision: int8
+    supported_devices:
+      - device: MAX78002
+        board: MAX78002EVKIT
+        family: CNN
+    metrics:
+      MSE_reported: 0.02205
+    status: production
