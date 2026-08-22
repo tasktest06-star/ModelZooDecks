@@ -32,3 +32,9 @@ flake8>=6.0
 #
 # i.MX Machine Learning User Guide:
 #   https://www.nxp.com/docs/en/user-guide/IMX-MACHINE-LEARNING-UG.pdf
+
+# ── MLOps stack ───────────────────────────────────────────────────────────────
+mlflow>=2.8.0
+prefect>=2.14.0
+optuna>=3.4.0
+evidently>=0.4.0
