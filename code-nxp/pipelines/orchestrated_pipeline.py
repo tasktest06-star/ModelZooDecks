@@ -107,7 +107,7 @@ def nxp_eiq_flow(
     config_path: str = "config/model_registry.yaml",
     platform: str = "imx8mplus",
     accuracy_gate: float = 0.70,
-    tracking_uri: str = "file:./mlruns",
+    tracking_uri: str = "sqlite:///mlflow.db",
     models: list = None,
 ):
     """Full NXP eIQ evaluation + Vela check + registration Prefect flow."""
