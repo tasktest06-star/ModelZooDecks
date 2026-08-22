@@ -146,7 +146,7 @@ if __name__ == "__main__":
     import glob
     model_file = glob.glob("*.tflite")[0]
     # {task} — input shape {input_size}
-    dummy = np.zeros([1, {input_size[0]}, {input_size[1]}, 3], dtype=np.float32)
+    dummy = np.zeros([1] + {list(input_size)}, dtype=np.float32)
     outputs = run_{model_id.replace("-", "_")}(model_file, dummy)
     print("Output shapes:", [o.shape for o in outputs])
 '''

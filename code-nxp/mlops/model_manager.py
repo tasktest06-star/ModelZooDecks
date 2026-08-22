@@ -104,6 +104,11 @@ class ModelManager:
         return result.returncode
 
     def compile_vela(self, model_id: str, output_dir: Optional[str] = None) -> Path:
+        from mlops.vela_compiler import VelaCompiler
+        if not VelaCompiler().is_available():
+            raise RuntimeError(
+                "Vela compiler not found. Install with: pip install ethos-u-vela"
+            )
         tflite_path = self.get_model_path(model_id)
         if not tflite_path.exists():
             raise FileNotFoundError(f"TFLite model not found: {tflite_path}")

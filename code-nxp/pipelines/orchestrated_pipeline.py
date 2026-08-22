@@ -34,12 +34,12 @@ def evaluate_model_task(model_id: str, platform: str, config_path: str,
         results = {"top1_accuracy": 0.0, "model_id": model_id}
         try:
             from mlops.evaluator import Evaluator
-            evaluator = Evaluator(config_path)
-            # NXP Evaluator has task-specific methods; dispatch by domain
-            model_cfg = {}
             with open(config_path) as _f:
                 import yaml as _yaml
-                model_cfg = _yaml.safe_load(_f).get("models", {}).get(model_id, {})
+                _registry = _yaml.safe_load(_f)
+            evaluator = Evaluator(_registry)
+            # NXP Evaluator has task-specific methods; dispatch by domain
+            model_cfg = _registry.get("models", {}).get(model_id, {})
             domain = model_cfg.get("domain", "vision")
             task = model_cfg.get("task", "image_classification")
             if domain == "vision" and task == "image_classification":

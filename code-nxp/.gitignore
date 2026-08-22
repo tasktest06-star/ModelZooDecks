@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+mlruns/
+mlflow.db
+drift_reports/
+deployed/
+vela_output/
