@@ -35,7 +35,25 @@ def evaluate_model_task(model_id: str, platform: str, config_path: str,
         try:
             from mlops.evaluator import Evaluator
             evaluator = Evaluator(config_path)
-            results = evaluator.evaluate(model_id=model_id, platform=platform, n_samples=50)
+            # NXP Evaluator has task-specific methods; dispatch by domain
+            model_cfg = {}
+            with open(config_path) as _f:
+                import yaml as _yaml
+                model_cfg = _yaml.safe_load(_f).get("models", {}).get(model_id, {})
+            domain = model_cfg.get("domain", "vision")
+            task = model_cfg.get("task", "image_classification")
+            if domain == "vision" and task == "image_classification":
+                raw = evaluator.evaluate_classification(model_id, platform)
+            elif domain == "vision" and task == "object_detection":
+                raw = evaluator.evaluate_segmentation(model_id, platform)
+            elif task == "super_resolution":
+                raw = evaluator.evaluate_super_resolution(model_id, platform)
+            else:
+                raw = {"top1_accuracy": 0.0, "note": f"no evaluator for {task}"}
+            results = {
+                "top1_accuracy": raw.get("top1_accuracy", raw.get("psnr_db", 0.0)),
+                **raw,
+            }
         except Exception as e:
             logger.warning(f"Eval failed for {model_id}: {e}")
         tracker.log_eval_metrics(

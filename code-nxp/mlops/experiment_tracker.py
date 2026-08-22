@@ -57,6 +57,8 @@ class ExperimentTracker:
         val = run.data.metrics.get(metric_key, 0.0)
         if val < accuracy_gate:
             raise ValueError(f"{model_name}: {metric_key}={val:.4f} below gate {accuracy_gate}")
+        with mlflow.start_run(run_id=run_id):
+            mlflow.log_dict({"model_name": model_name, "metric": val}, "model/metadata.json")
         result = mlflow.register_model(f"runs:/{run_id}/model", model_name)
         client.set_registered_model_tag(model_name, "platform_validated", "true")
         return result.version
