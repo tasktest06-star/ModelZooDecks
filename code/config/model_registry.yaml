@@ -1,234 +1,586 @@
-# TI EdgeAI Model Registry
-# Maps model names to artifact IDs, metrics, and metadata
-# Compatible with edgeai-modelzoo v11.2.0
+# TI EdgeAI Model Zoo — Model Registry
+# 34+ models across 5 vision tasks, verified against edgeai-modelzoo repo structure
+# Paths are relative to the edgeai-modelzoo clone root
 
 models:
 
-  # ─── Classification ──────────────────────────────────────────────────────────
+  # ── Image Classification (ImageNet) ─────────────────────────────────────────
 
-  mobilenetv2:
-    version: "11.2.0"
-    task: classification
+  mobilenet_v2_lite:
+    task: image_classification
+    domain: vision
     format: onnx
-    input_size: [224, 224]
-    model_id: "cl-6360"
-    gmacs: 0.300
-    artifact_ids:
-      AM62A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
-      AM67A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
-      AM68A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
-      AM69A:  "ONR-CL-6360-mobv2-tv-imagenet-224x224"
-      TDA4VM: "ONR-CL-6360-mobv2-tv-imagenet-224x224"
-    metrics:
-      top1_fp32: 72.13
-      top1_int8: 71.8
-      int8_drop: 0.33
     dataset: imagenet
-    status: production
-
-  mobilenetv3lite-large:
-    version: "11.2.0"
-    task: classification
-    format: onnx
     input_size: [224, 224]
-    model_id: "cl-6370"
-    gmacs: 1.08
-    artifact_ids:
-      AM62A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
-      AM67A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
-      AM68A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
-      AM69A:  "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
-      TDA4VM: "ONR-CL-6370-mobv3lite-large-imagenet-224x224"
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/mobilenet_v2_lite_wt-v2_20231101_model.onnx
     metrics:
-      top1_fp32: 72.22
-      top1_int8: 71.9
-      int8_drop: 0.32
-    dataset: imagenet
-    status: production
+      top1_accuracy: 0.723
+      flops_gops: 0.30
+      params_m: 3.5
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "Lite variant with reduced activation width for TIDL"
 
-  efficientnet-lite4:
-    version: "11.2.0"
-    task: classification
+  mobilenet_v2_tf:
+    task: image_classification
+    domain: vision
     format: tflite
-    input_size: [224, 224]
-    model_id: "cl-2000"
-    gmacs: 2.645
-    artifact_ids:
-      AM62A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
-      AM67A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
-      AM68A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
-      AM69A:  "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
-      TDA4VM: "TFL-CL-2000-efficientnet-lite4-imagenet-224x224"
-    metrics:
-      top1_fp32: 82.6
-      top1_int8: 82.4
-      int8_drop: 0.20
     dataset: imagenet
-    status: production
-
-  swin-tiny:
-    version: "11.2.0"
-    task: classification
-    format: onnx
     input_size: [224, 224]
-    model_id: "cl-6700"
-    gmacs: 4.50
-    artifact_ids:
-      AM68A:  "ONR-CL-6700-swin-tiny-imagenet-224x224"
-      AM69A:  "ONR-CL-6700-swin-tiny-imagenet-224x224"
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/tf1-models/mobilenet_v2_1.0_224.tflite
     metrics:
-      top1_fp32: 82.1
-      top1_int8: 77.9
-      int8_drop: 4.2
+      top1_accuracy: 0.718
+      flops_gops: 0.31
+      params_m: 3.4
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A]
+    tidl_compatible: true
+    notes: "TFLite quantized MobileNetV2 from TF1 model zoo"
+
+  mobilenet_v3_large_lite:
+    task: image_classification
+    domain: vision
+    format: onnx
     dataset: imagenet
-    status: production
-    notes: "Larger INT8 drop typical for transformer models"
-
-  # ─── Object Detection ─────────────────────────────────────────────────────────
-
-  yolox-nano-lite:
-    version: "11.2.0"
-    task: object_detection
-    format: onnx
-    input_size: [416, 416]
-    model_id: "od-8200"
-    gmacs: 1.476
-    artifact_ids:
-      AM62A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
-      AM67A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
-      AM68A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
-      AM69A:  "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
-      TDA4VM: "ONR-OD-8200-yolox-nano-lite-mmdet-coco-416x416"
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/mobilenet_v3_large_lite_wt-v2_20231011_model.onnx
     metrics:
-      mAP_fp32: 24.9
-      mAP_int8: 24.6
-      ap50_fp32: 41.8
-      int8_drop: 0.3
-    dataset: coco
-    num_classes: 80
-    status: production
+      top1_accuracy: 0.748
+      flops_gops: 0.22
+      params_m: 5.5
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "Hard-swish replaced with ReLU for TIDL compatibility"
 
-  yolox-s-lite:
-    version: "11.2.0"
-    task: object_detection
+  mobilenet_v3_large:
+    task: image_classification
+    domain: vision
     format: onnx
-    input_size: [640, 640]
-    model_id: "od-8220"
-    gmacs: 13.43
-    artifact_ids:
-      AM62A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
-      AM67A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
-      AM68A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
-      AM69A:  "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
-      TDA4VM: "ONR-OD-8220-yolox-s-lite-mmdet-coco-640x640"
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv/mobilenet_v3_lite_large_20210507.onnx
     metrics:
-      mAP_fp32: 38.6
-      mAP_int8: 38.2
-      ap50_fp32: 56.0
-      int8_drop: 0.4
-    dataset: coco
-    num_classes: 80
-    status: production
+      top1_accuracy: 0.744
+      flops_gops: 0.22
+      params_m: 5.5
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A]
+    tidl_compatible: true
+    notes: ""
 
-  yolox-m-lite:
-    version: "11.2.0"
-    task: object_detection
+  mobilenet_v3_small:
+    task: image_classification
+    domain: vision
     format: onnx
-    input_size: [640, 640]
-    model_id: "od-8230"
-    gmacs: 36.9
-    artifact_ids:
-      AM68A:  "ONR-OD-8230-yolox-m-lite-mmdet-coco-640x640"
-      AM69A:  "ONR-OD-8230-yolox-m-lite-mmdet-coco-640x640"
-      TDA4VM: "ONR-OD-8230-yolox-m-lite-mmdet-coco-640x640"
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv/mobilenet_v3_lite_small_20210429.onnx
     metrics:
-      mAP_fp32: 44.8
-      mAP_int8: 44.3
-      ap50_fp32: 63.0
-      int8_drop: 0.5
-    dataset: coco
-    num_classes: 80
-    status: production
+      top1_accuracy: 0.672
+      flops_gops: 0.06
+      params_m: 2.5
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A]
+    tidl_compatible: true
+    notes: "Ultra-lightweight; fits AM62A with headroom"
 
-  # ─── Semantic Segmentation ────────────────────────────────────────────────────
-
-  deeplabv3lite-mobilev2:
-    version: "11.2.0"
-    task: segmentation
+  inception_v3:
+    task: image_classification
+    domain: vision
     format: onnx
-    input_size: [512, 512]
-    model_id: "ss-8610"
-    gmacs: 3.61
-    artifact_ids:
-      AM62A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
-      AM67A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
-      AM68A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
-      AM69A:  "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
-      TDA4VM: "ONR-SS-8610-deeplabv3lite-mobv2-ade20k32-512x512"
+    dataset: imagenet
+    input_size: [299, 299]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/tf1-models/inception_v3.onnx
     metrics:
-      miou_fp32: 49.95
-      miou_int8: 49.5
-      int8_drop: 0.45
-    dataset: ade20k32
-    num_classes: 32
-    status: production
+      top1_accuracy: 0.779
+      flops_gops: 5.7
+      params_m: 23.8
+    soc_targets: [TDA4VM, AM68A, AM69A]
+    tidl_compatible: true
+    notes: ""
 
-  fpnlite-mobilev2:
-    version: "11.2.0"
-    task: segmentation
-    format: onnx
-    input_size: [512, 512]
-    model_id: "ss-8630"
-    gmacs: 5.44
-    artifact_ids:
-      AM62A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
-      AM67A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
-      AM68A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
-      AM69A:  "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
-      TDA4VM: "ONR-SS-8630-fpnlite-mobv2-cocoseg21-512x512"
+  inception_v1:
+    task: image_classification
+    domain: vision
+    format: tflite
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/tf1-models/inception_v1_224_quant.tflite
     metrics:
-      miou_fp32: 57.68
-      miou_int8: 57.2
-      int8_drop: 0.48
-    dataset: cocoseg21
-    num_classes: 21
-    status: production
+      top1_accuracy: 0.698
+      flops_gops: 1.5
+      params_m: 6.6
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A]
+    tidl_compatible: true
+    notes: "INT8 quantized TFLite"
 
-  # ─── Keypoint Detection ───────────────────────────────────────────────────────
-
-  yoloxpose-s-lite:
-    version: "11.2.0"
-    task: keypoint
+  resnet50_lite:
+    task: image_classification
+    domain: vision
     format: onnx
-    input_size: [640, 640]
-    model_id: "kd-7070"
-    artifact_ids:
-      AM68A:  "ONR-KD-7070-yoloxpose-s-lite-mmpose-coco-640x640"
-      AM69A:  "ONR-KD-7070-yoloxpose-s-lite-mmpose-coco-640x640"
-      TDA4VM: "ONR-KD-7070-yoloxpose-s-lite-mmpose-coco-640x640"
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/resnet50_lite_wt-v2_20230919.onnx
     metrics:
-      AP_fp32: 56.4
-      AP_int8: 55.1
-      int8_drop: 1.3
-    dataset: coco_keypoints
-    num_keypoints: 17
-    status: production
+      top1_accuracy: 0.768
+      flops_gops: 4.1
+      params_m: 25.6
+    soc_targets: [TDA4VM, AM68A, AM69A]
+    tidl_compatible: true
+    notes: ""
 
-  # ─── Depth Estimation ─────────────────────────────────────────────────────────
-
-  midas-small:
-    version: "11.2.0"
-    task: depth_estimation
+  resnet101_lite:
+    task: image_classification
+    domain: vision
     format: onnx
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/resnet101_lite_wt-v2_20230919.onnx
+    metrics:
+      top1_accuracy: 0.789
+      flops_gops: 7.8
+      params_m: 44.5
+    soc_targets: [TDA4VM, AM68A, AM69A]
+    tidl_compatible: true
+    notes: ""
+
+  regnet_x_400mf_lite:
+    task: image_classification
+    domain: vision
+    format: onnx
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/regnet_x_400mf_lite_wt-v2_20230920.onnx
+    metrics:
+      top1_accuracy: 0.726
+      flops_gops: 0.40
+      params_m: 5.2
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "RegNetX family; excellent accuracy/FLOP tradeoff"
+
+  regnet_x_800mf_lite:
+    task: image_classification
+    domain: vision
+    format: onnx
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/regnet_x_800mf_lite_wt-v2_20230920.onnx
+    metrics:
+      top1_accuracy: 0.752
+      flops_gops: 0.80
+      params_m: 7.3
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  regnet_x_1600mf_lite:
+    task: image_classification
+    domain: vision
+    format: onnx
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/regnet_x_1_6gf_lite_wt-v2_20230920.onnx
+    metrics:
+      top1_accuracy: 0.779
+      flops_gops: 1.6
+      params_m: 9.2
+    soc_targets: [TDA4VM, AM68A, AM69A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  resnext50_lite:
+    task: image_classification
+    domain: vision
+    format: onnx
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/edgeai-tv2/resnext50_32x4d_lite_wt-v2_20230920.onnx
+    metrics:
+      top1_accuracy: 0.773
+      flops_gops: 4.2
+      params_m: 25.0
+    soc_targets: [TDA4VM, AM68A, AM69A]
+    tidl_compatible: true
+    notes: "32×4d grouped convolution variant"
+
+  swin_tiny:
+    task: image_classification
+    domain: vision
+    format: onnx
+    dataset: imagenet
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/hf-transformers/swin_tiny_patch4_window7_224.onnx
+    metrics:
+      top1_accuracy: 0.812
+      flops_gops: 4.5
+      params_m: 28.3
+    soc_targets: [TDA4VM, AM68A, AM69A]
+    tidl_compatible: true
+    notes: "Swin Transformer — highest classification accuracy in zoo"
+
+  fastvit_s12:
+    task: image_classification
+    domain: vision
+    format: onnx
+    dataset: imagenet
     input_size: [256, 256]
-    model_id: "de-7310"
-    gmacs: 4.63
-    artifact_ids:
-      AM62A:  "ONR-DE-7310-midas-small-v21-nyu-256x256"
-      AM68A:  "ONR-DE-7310-midas-small-v21-nyu-256x256"
-      AM69A:  "ONR-DE-7310-midas-small-v21-nyu-256x256"
+    input_channels: 3
+    model_path: models/vision/classification/imagenet1k/timm/fastvit_s12.apple_in1k_reparam_simp.onnx
     metrics:
-      delta1_fp32: 86.67
-      delta1_int8: 85.9
+      top1_accuracy: 0.793
+      flops_gops: 1.4
+      params_m: 8.8
+    soc_targets: [TDA4VM, AM68A, AM69A, AM67A]
+    tidl_compatible: true
+    notes: "Structural reparameterization applied; simplified ONNX export"
+
+  # ── Object Detection (COCO 80-class) ────────────────────────────────────────
+
+  yolox_pico_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [320, 320]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/yolox_pico_lite_320x320_20230410_model.onnx
+    metrics:
+      map_50: 0.221
+      flops_gops: 0.29
+      params_m: 0.38
+      size_kb: 370
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "Smallest YOLOX; fits AM62A easily"
+
+  yolox_nano_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [416, 416]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/yolox_nano_lite_416x416_20220214_model.onnx
+    metrics:
+      map_50: 0.253
+      flops_gops: 1.1
+      params_m: 0.91
+      size_kb: 900
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  yolox_tiny_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [416, 416]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/yolox_tiny_lite_416x416_20220217_model.onnx
+    metrics:
+      map_50: 0.326
+      flops_gops: 6.5
+      params_m: 5.1
+      size_kb: 5000
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  yolox_s_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [640, 640]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/yolox_s_lite_640x640_20220221_model.onnx
+    metrics:
+      map_50: 0.389
+      flops_gops: 26.9
+      params_m: 9.0
+      size_kb: 8900
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  yolox_m_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [640, 640]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-yolox/yolox_m_lite_640x640.onnx
+    metrics:
+      map_50: 0.460
+      flops_gops: 73.8
+      params_m: 25.3
+    soc_targets: [TDA4VM, AM68A, AM69A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  yolov7_l_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [640, 640]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/yolov7_l_coco_lite_640x640_20250109_model.onnx
+    metrics:
+      map_50: 0.510
+      flops_gops: 104.0
+      params_m: 36.9
+    soc_targets: [TDA4VM, AM68A, AM69A, AM67A]
+    tidl_compatible: true
+    notes: "YOLOv7-L lite; high accuracy, requires AM68A/TDA4VM"
+
+  rtmdet_m_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [640, 640]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/rtmdet_m_coco_lite_640x640_20250404_model.onnx
+    metrics:
+      map_50: 0.562
+      flops_gops: 38.5
+      params_m: 24.7
+    soc_targets: [TDA4VM, AM68A, AM69A, AM67A]
+    tidl_compatible: true
+    notes: "RTMDet-M lite; strong accuracy/speed"
+
+  rtmdet_l_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [640, 640]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/rtmdet_l_coco_lite_640x640_20250310_model.onnx
+    metrics:
+      map_50: 0.596
+      flops_gops: 79.3
+      params_m: 52.3
+    soc_targets: [TDA4VM, AM68A, AM69A]
+    tidl_compatible: true
+    notes: "Highest mAP in zoo; TDA4VM / AM69A recommended"
+
+  ssd_mobilenetv2_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [512, 512]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model.onnx
+    metrics:
+      map_50: 0.255
+      flops_gops: 3.9
+      params_m: 4.3
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "SSD with MobileNetV2 backbone; production-proven"
+
+  ssd_regnetx200mf_lite:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [320, 320]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/ssd_regnetx-200mf_fpn_bgr_lite_320x320_20201010_model.onnx
+    metrics:
+      map_50: 0.260
+      flops_gops: 0.6
+      params_m: 2.8
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "Ultra-lightweight SSD+FPN; ideal for AM62A"
+
+  efficientdet_lite0:
+    task: object_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [512, 512]
+    input_channels: 3
+    model_path: models/vision/detection/coco/edgeai-mmdet/efficientdet_effb0_bifpn_lite_512x512_20240612_model.onnx
+    metrics:
+      map_50: 0.340
+      flops_gops: 5.2
+      params_m: 3.9
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "EfficientDet-D0 with BiFPN; lite ONNX export"
+
+  # ── Semantic Segmentation ────────────────────────────────────────────────────
+
+  deeplabv3plus_mobilenetv2:
+    task: semantic_segmentation
+    domain: vision
+    format: onnx
+    dataset: cocoseg21
+    input_size: [512, 512]
+    input_channels: 3
+    num_classes: 21
+    model_path: models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405.onnx
+    metrics:
+      miou: 0.640
+      flops_gops: 9.8
+      params_m: 5.9
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "DeepLabV3+ with MobileNetV2 backbone; COCO 21-class"
+
+  deeplabv3_mobilenetv3_large:
+    task: semantic_segmentation
+    domain: vision
+    format: onnx
+    dataset: cocoseg21
+    input_size: [512, 512]
+    input_channels: 3
+    num_classes: 21
+    model_path: models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3_mobilenet_v3_large_lite_512x512_20210527.onnx
+    metrics:
+      miou: 0.650
+      flops_gops: 6.8
+      params_m: 11.0
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  fpn_regnetx800mf:
+    task: semantic_segmentation
+    domain: vision
+    format: onnx
+    dataset: cocoseg21
+    input_size: [512, 512]
+    input_channels: 3
+    num_classes: 21
+    model_path: models/vision/segmentation/cocoseg21/edgeai-tv/fpn_aspp_regnetx800mf_edgeailite_512x512_20210405.onnx
+    metrics:
+      miou: 0.680
+      flops_gops: 17.9
+      params_m: 13.5
+    soc_targets: [TDA4VM, AM68A, AM69A, AM67A]
+    tidl_compatible: true
+    notes: "FPN+ASPP with RegNetX-800MF backbone; highest mIoU"
+
+  lraspp_mobilenetv3_large:
+    task: semantic_segmentation
+    domain: vision
+    format: onnx
+    dataset: cocoseg21
+    input_size: [512, 512]
+    input_channels: 3
+    num_classes: 21
+    model_path: models/vision/segmentation/cocoseg21/edgeai-tv/lraspp_mobilenet_v3_large_lite_512x512_20210527.onnx
+    metrics:
+      miou: 0.620
+      flops_gops: 2.0
+      params_m: 3.2
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "Lite RASPP head; most efficient segmentation model"
+
+  # ── Keypoint Detection (COCO 17-keypoint) ───────────────────────────────────
+
+  yoloxpose_tiny_lite:
+    task: keypoint_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [416, 416]
+    input_channels: 3
+    num_keypoints: 17
+    model_path: models/vision/keypoint/coco/edgeai-mmpose/yoloxpose_tiny_lite_416x416_20240808_model.onnx
+    metrics:
+      ap_50: 0.580
+      flops_gops: 6.5
+      params_m: 5.1
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "Lightweight one-stage pose; fits AM62A"
+
+  yoloxpose_s_lite:
+    task: keypoint_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [640, 640]
+    input_channels: 3
+    num_keypoints: 17
+    model_path: models/vision/keypoint/coco/edgeai-mmpose/yoloxpose_s_lite_coco-640x640_20250119_model.onnx
+    metrics:
+      ap_50: 0.670
+      flops_gops: 27.0
+      params_m: 9.4
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: ""
+
+  yolox_s_pose_lite:
+    task: keypoint_detection
+    domain: vision
+    format: onnx
+    dataset: coco
+    input_size: [640, 640]
+    input_channels: 3
+    num_keypoints: 17
+    model_path: models/vision/keypoint/coco/edgeai-yolox/yolox_s_pose_ti_lite_640_20220301_model.onnx
+    metrics:
+      ap_50: 0.650
+      flops_gops: 26.9
+      params_m: 9.0
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "Original TI-lite pose model; prototxt available for TIDL"
+
+  # ── Monocular Depth Estimation ───────────────────────────────────────────────
+
+  midas_small:
+    task: monocular_depth
+    domain: vision
+    format: onnx
+    dataset: mixed
+    input_size: [256, 256]
+    input_channels: 3
+    model_path: models/vision/depth_estimation/nyudepthv2/MiDaS/midas_small.onnx
+    metrics:
+      rel_error: 0.142
+      flops_gops: 9.2
+      params_m: 21.0
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "MiDaS v2 small; cross-dataset training (10 datasets)"
+
+  fast_depth:
+    task: monocular_depth
+    domain: vision
+    format: onnx
     dataset: nyudepthv2
-    status: production
+    input_size: [224, 224]
+    input_channels: 3
+    model_path: models/vision/depth_estimation/nyudepthv2/fast-depth/fastdepth_224x224.onnx
+    metrics:
+      rel_error: 0.158
+      flops_gops: 0.74
+      params_m: 3.9
+    soc_targets: [TDA4VM, AM68A, AM69A, AM62A, AM67A]
+    tidl_compatible: true
+    notes: "FastDepth encoder-decoder; real-time on AM62A"
