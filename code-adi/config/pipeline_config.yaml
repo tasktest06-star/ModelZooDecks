@@ -1,0 +1,81 @@
+adi_modelzoo:
+  version: "1.0.0"
+  repo_root: "./adi-model-zoo"
+  local_cache: "./model_cache"
+  artifact_dir: "./artifacts"
+
+# Target device
+device: MAX78002
+board: MAX78002EVKIT
+
+# Task and model selection
+task: object_detection
+model: feature_pyramid_net
+
+training:
+  framework: ai8x-training
+  epochs: 100
+  batch_size: 32
+  learning_rate: 0.001
+  qat: true                       # Quantization-Aware Training
+  qat_start_epoch: 80
+  weight_bits: 8
+  bias_bits: 8
+  checkpoint_dir: ./checkpoints
+  pretrained: null                # path to pretrained .pth.tar or null
+
+export:
+  format: ai8x                    # ai8x | tflite | pytorch
+  output_path: ./exports
+  fold_ratio: 1                   # spatial folding for AI8X (1, 2, or 4)
+  act_mode_8bit: true             # use [-128, 127] range
+
+synthesis:
+  ai8xize_path: ./ai8x-synthesis
+  device: MAX78002                # MAX78000 | MAX78002
+  compact_weights: true
+  compact_data: true
+  overwrite: true
+  output_dir: ./synthesized
+  log_level: info
+
+evaluation:
+  dataset_path: ./datasets
+  dataset: pascal_voc
+  split: val
+  num_frames: 1000
+  detection_threshold: 0.3
+  nms_overlap: 0.3
+  top_k: 50
+  report_dir: ./reports
+  gates:
+    image_classification:
+      min_top1: 0.55
+      max_drop_from_fp32: 0.05
+    object_detection:
+      min_map: 0.40
+      max_drop_from_fp32: 0.05
+    image_segmentation:
+      min_accuracy: 0.95
+      max_drop_from_fp32: 0.03
+    keyword_spotting:
+      min_accuracy: 0.85
+      max_drop_from_fp32: 0.05
+    audio_denoising:
+      min_pesq: 2.5
+    anomaly_detection:
+      min_auc: 0.50
+
+deployment:
+  bundle_output: ./deploy_bundles
+  target: local                   # local | evkit | MAX78002EVKIT
+  flash_tool: openocd             # openocd | msdk-flash
+  verify_after_flash: false
+
+monitoring:
+  enabled: true
+  latency_alert_ms: 50.0          # MAX78002 CNN is fast, ~5-20ms typical
+  confidence_drift_threshold: 0.25
+  drift_window_frames: 50
+  log_dir: ./monitor_logs
+  webhook_url: null

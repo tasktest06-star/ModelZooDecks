@@ -1,0 +1,37 @@
+# ADI Model Zoo MLOps Pipeline — Python dependencies
+# Core (no ML framework required for basic pipeline ops)
+pyyaml>=6.0
+numpy>=1.23
+
+# Image loading (optional — used by DataPipeline for raw image folders)
+Pillow>=9.0
+
+# TFLite runtime (for MAX32690 / ADSP-SC835 models)
+# Install one of:
+#   tflite_runtime: pip install tflite-runtime
+#   tensorflow:     pip install tensorflow
+
+# PyTorch (for AI8X / GenreNet models)
+# torch>=2.0  (install from pytorch.org for your platform)
+
+# Testing
+pytest>=7.0
+
+# Linting
+flake8>=6.0
+
+# ── ADI / Maxim Frameworks (install separately from their GitHub repos) ──────
+# ai8x-training   : https://github.com/MaximIntegratedAI/ai8x-training
+#   → QAT training framework for MAX78000/MAX78002
+#   → Install: git clone + pip install -r requirements.txt
+#
+# ai8x-synthesis  : https://github.com/MaximIntegratedAI/ai8x-synthesis
+#   → ai8xize.py — synthesizes .pth.tar checkpoints → hardware config
+#   → Install: git clone + pip install -r requirements.txt
+#
+# MSDK (MAX SDK)  : https://github.com/analogdevicesinc/msdk
+#   → Full SDK for MAX78000/MAX78002/MAX32690
+#   → Includes OpenOCD, GCC toolchain, EV-Kit examples
+#
+# TFLite Micro    : https://github.com/tensorflow/tflite-micro
+#   → Lightweight TFLite runtime for Cortex-M (MAX32690)
