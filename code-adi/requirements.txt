@@ -20,6 +20,12 @@ pytest>=7.0
 # Linting
 flake8>=6.0
 
+# MLOps: experiment tracking, orchestration, HPO, drift detection
+mlflow>=2.8.0
+prefect>=2.14.0
+optuna>=3.4.0
+evidently>=0.4.0
+
 # ── ADI / Maxim Frameworks (install separately from their GitHub repos) ──────
 # ai8x-training   : https://github.com/MaximIntegratedAI/ai8x-training
 #   → QAT training framework for MAX78000/MAX78002
