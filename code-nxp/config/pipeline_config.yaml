@@ -1,0 +1,67 @@
+platform: imx8mplus
+task: image_classification
+model: mobilenetv2
+
+training:
+  epochs: 100
+  batch_size: 32
+  optimizer: adam
+  lr: 0.001
+
+quantization:
+  method: ptq
+  calibration_images: 100
+  calibration_dataset: imagenet_val
+  input_type: int8
+  output_type: int8
+
+vela:
+  enabled: false          # set true for i.MX 93 Ethos-U65 targets
+  accelerator_config: ethos-u65-256
+  optimise: Performance
+  system_config: Ethos_U65_High_End
+
+evaluation:
+  gates:
+    vision_classification:
+      metric: top1_accuracy
+      threshold: 0.68
+    vision_object_detection:
+      metric: map_50
+      threshold: 0.18
+    vision_segmentation:
+      metric: miou
+      threshold: 0.62
+    vision_super_resolution:
+      metric: psnr
+      threshold: 28.0
+    audio_keyword_spotting:
+      metric: top1_accuracy
+      threshold: 0.88
+    audio_speech_recognition:
+      metric: wer
+      threshold: 0.10
+      lower_is_better: true
+    audio_anomaly_detection:
+      metric: auc_roc
+      threshold: 0.80
+    misc_eeg_classification:
+      metric: top1_accuracy
+      threshold: 0.70
+  num_eval_frames: 200
+  fail_on_drop: true
+
+monitoring:
+  window_size: 100
+  drift_threshold: 0.60
+  alert_webhook: ""
+  log_dir: logs/
+
+artifact:
+  output_dir: deployed/
+  bundle_format: tgz
+  include_recipe: true
+
+docker:
+  image: nxp-model-zoo
+  build_context: "."

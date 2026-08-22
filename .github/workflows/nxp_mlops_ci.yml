@@ -1,0 +1,199 @@
+name: NXP eIQ MLOps CI
+
+on:
+  push:
+    paths:
+      - "code-nxp/**"
+      - ".github/workflows/nxp_mlops_ci.yml"
+  pull_request:
+    paths:
+      - "code-nxp/**"
+
+jobs:
+  # ── Lint & YAML validation ────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install lint tools
+        run: pip install flake8 pyyaml
+      - name: Flake8
+        run: |
+          cd code-nxp
+          flake8 mlops/ pipelines/ --max-line-length=120 --ignore=E501,W503
+      - name: Validate pipeline_config.yaml
+        run: python -c "import yaml; yaml.safe_load(open('code-nxp/config/pipeline_config.yaml'))"
+      - name: Validate model_registry.yaml
+        run: python -c "import yaml; yaml.safe_load(open('code-nxp/config/model_registry.yaml'))"
+
+  # ── Unit tests ─────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          cd code-nxp
+          pip install numpy Pillow PyYAML pytest pytest-cov
+          pip install librosa soundfile scipy || true
+      - name: Run tests
+        run: |
+          cd code-nxp
+          pytest tests/ -v --tb=short \
+            --cov=mlops --cov-report=term-missing \
+            --cov-fail-under=75
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          flags: nxp-mlops
+
+  # ── Registry validation ─────────────────────────────────────────────────────
+  validate-registry:
+    name: Validate Model Registry
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Check all models have required fields
+        run: |
+          python - <<'EOF'
+          import yaml, sys
+          with open("code-nxp/config/model_registry.yaml") as f:
+              data = yaml.safe_load(f)
+          required = {"task", "domain", "format", "model_path", "weight_file", "supported_platforms"}
+          errors = []
+          for model_id, meta in data["models"].items():
+              missing = required - set(meta.keys())
+              if missing:
+                  errors.append(f"{model_id}: missing {missing}")
+              if not meta.get("supported_platforms"):
+                  errors.append(f"{model_id}: empty supported_platforms")
+          if errors:
+              for e in errors:
+                  print(f"ERROR: {e}")
+              sys.exit(1)
+          print(f"Registry OK: {len(data['models'])} models validated")
+          EOF
+
+  # ── Smoke evaluation (no real models) ──────────────────────────────────────
+  smoke-eval:
+    name: Smoke Eval (${{ matrix.model }})
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: mobilenetv2
+            domain: vision
+            task: image_classification
+            platform: imx8mplus
+          - model: ds_cnn
+            domain: audio
+            task: keyword_spotting
+            platform: imx8mplus
+          - model: eeg_tcnet
+            domain: misc
+            task: eeg_classification
+            platform: imx8mplus
+          - model: yolov8_m
+            domain: vision
+            task: object_detection
+            platform: imx93
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install numpy Pillow PyYAML
+          pip install librosa soundfile scipy || true
+      - name: Verify model metadata loaded
+        run: |
+          python - <<'EOF'
+          import sys, yaml
+          sys.path.insert(0, "code-nxp")
+          from mlops.model_manager import ModelManager
+          mgr = ModelManager("code-nxp/config/pipeline_config.yaml")
+          meta = mgr.get_metadata("${{ matrix.model }}")
+          assert meta["task"] == "${{ matrix.task }}", f"Task mismatch: {meta['task']}"
+          assert meta["domain"] == "${{ matrix.domain }}", f"Domain mismatch: {meta['domain']}"
+          print(f"Model ${{ matrix.model }}: task={meta['task']} domain={meta['domain']}")
+          EOF
+      - name: Run dummy preprocessing
+        run: |
+          python - <<'EOF'
+          import sys
+          import numpy as np
+          sys.path.insert(0, "code-nxp")
+          from mlops.data_pipeline import preprocess
+          task = "${{ matrix.task }}"
+          # Make dummy input per task
+          if task in ("image_classification", "object_detection", "semantic_segmentation",
+                      "instance_segmentation", "super_resolution", "low_light_enhancement",
+                      "monocular_depth", "face_recognition", "pose_estimation"):
+              data = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+          elif task in ("keyword_spotting", "speech_recognition", "anomaly_detection"):
+              data = np.random.randn(16000).astype(np.float32)
+          elif task == "eeg_classification":
+              data = np.random.randn(22, 1125).astype(np.float32)
+          else:
+              data = np.zeros((100,), dtype=np.float32)
+          out = preprocess(task, data)
+          print(f"Preprocessing OK: {task} → {out.shape}")
+          EOF
+
+  # ── Bundle creation smoke test ─────────────────────────────────────────────
+  bundle-smoke:
+    name: Bundle Smoke Test
+    runs-on: ubuntu-latest
+    needs: validate-registry
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install
+        run: pip install numpy PyYAML Pillow
+      - name: Create dummy bundle
+        run: |
+          python - <<'EOF'
+          import sys, yaml, tempfile, os
+          from pathlib import Path
+          import numpy as np
+          sys.path.insert(0, "code-nxp")
+
+          # Create a minimal dummy tflite file
+          with tempfile.TemporaryDirectory() as tmpdir:
+              tflite_path = Path(tmpdir) / "dummy.tflite"
+              tflite_path.write_bytes(b"dummy tflite content")
+
+              config = {
+                  "artifact": {"output_dir": tmpdir + "/out", "bundle_format": "tgz", "include_recipe": False},
+                  "monitoring": {"window_size": 10, "drift_threshold": 0.5, "alert_webhook": "", "log_dir": tmpdir + "/logs"},
+              }
+              from mlops.artifact_manager import ArtifactManager
+              mgr = ArtifactManager(config)
+              meta = {"task": "image_classification", "domain": "vision", "input_size": [224, 224], "num_classes": 1000, "supported_platforms": [{"platform": "imx8mplus"}], "metrics": {"top1_accuracy": 0.718}}
+              bundle = mgr.create_bundle("mobilenetv2", str(tflite_path), meta)
+              assert bundle.exists(), f"Bundle not created: {bundle}"
+              ok = mgr.verify_bundle(str(bundle))
+              assert ok, "Bundle verification failed"
+              print(f"Bundle smoke test PASSED: {bundle.name}")
+          EOF

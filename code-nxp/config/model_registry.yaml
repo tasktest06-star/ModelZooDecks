@@ -1,0 +1,821 @@
+# NXP eIQ Model Zoo — Model Registry
+# All ~35 models with metadata, platform support, and accuracy metrics
+
+models:
+
+  # ── Vision / Classification ───────────────────────────────────────────────
+  mobilenetv2:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [224, 224]
+    input_channels: 3
+    input_type: float32
+    num_classes: 1000
+    dataset: imagenet
+    weight_file: "mobilenet_v2_1.0_224_quant.tflite"
+    model_path: "tasks/vision/classification/mobilenetv2"
+    size_kb: 3408
+    flops_mops: 608
+    params_k: 3500
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      top1_accuracy: 0.718
+    status: production
+
+  mobilenetv1:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [224, 224]
+    input_channels: 3
+    input_type: float32
+    num_classes: 1000
+    dataset: imagenet
+    weight_file: "mobilenet_v1_1.0_224_quant.tflite"
+    model_path: "tasks/vision/classification/mobilenetv1"
+    size_kb: 4274
+    flops_mops: 569
+    params_k: 4200
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: imx_rt1170
+        board: MIMXRT1170-EVK
+        delegate: cpu
+      - platform: imx_rt1050
+        board: IMXRT1050-EVKB
+        delegate: cpu
+    metrics:
+      top1_accuracy: 0.709
+    status: production
+
+  resnet50:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [224, 224]
+    input_channels: 3
+    input_type: float32
+    num_classes: 1000
+    dataset: imagenet
+    weight_file: "resnet50_int8.tflite"
+    model_path: "tasks/vision/classification/resnet"
+    size_kb: 25100
+    flops_mops: 2100
+    params_k: 25600
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      top1_accuracy: 0.759
+    status: production
+
+  efficientnet_lite:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [224, 224]
+    input_channels: 3
+    input_type: float32
+    num_classes: 1000
+    dataset: imagenet
+    weight_file: "efficientnet_lite0_int8.tflite"
+    model_path: "tasks/vision/classification/efficientnet-lite"
+    size_kb: 5018
+    flops_mops: 407
+    params_k: 4600
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      top1_accuracy: 0.722
+    status: production
+
+  mnasnet:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [224, 224]
+    input_channels: 3
+    input_type: float32
+    num_classes: 1000
+    dataset: imagenet
+    weight_file: "mnasnet1.0_224_int8.tflite"
+    model_path: "tasks/vision/classification/mnasnet"
+    size_kb: 4700
+    flops_mops: 825
+    params_k: 4400
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      top1_accuracy: 0.723
+    status: production
+
+  inceptionv4:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [299, 299]
+    input_channels: 3
+    input_type: float32
+    num_classes: 1000
+    dataset: imagenet
+    weight_file: "inception_v4_int8.tflite"
+    model_path: "tasks/vision/classification/inceptionv4"
+    size_kb: 43200
+    flops_mops: 5490
+    params_k: 42700
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      top1_accuracy: 0.782
+    status: production
+
+  tiny_resnet:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [32, 32]
+    input_channels: 3
+    input_type: float32
+    num_classes: 10
+    dataset: cifar10
+    weight_file: "tiny_resnet_int8.tflite"
+    model_path: "tasks/vision/classification/tiny-resnet"
+    size_kb: 156
+    flops_mops: 12
+    params_k: 78
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: cpu
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: mcx_n947
+        board: FRDM-MCXN947
+        delegate: npu
+    metrics:
+      top1_accuracy: 0.924
+    status: production
+
+  visual_wake_word:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [96, 96]
+    input_channels: 3
+    input_type: int8
+    num_classes: 2
+    dataset: vw_coco2014
+    weight_file: "vww_96_int8.tflite"
+    model_path: "tasks/vision/classification/visual-wake-word"
+    size_kb: 324
+    flops_mops: 18
+    params_k: 200
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: mcx_n947
+        board: FRDM-MCXN947
+        delegate: npu
+    metrics:
+      top1_accuracy: 0.853
+    status: production
+
+  deepface_emotion:
+    version: "1.0.0"
+    task: image_classification
+    domain: vision
+    format: tflite
+    input_size: [48, 48]
+    input_channels: 1
+    input_type: float32
+    num_classes: 8
+    dataset: fer2013
+    weight_file: "deepface_emotion_int8.tflite"
+    model_path: "tasks/vision/classification/deepface-emotion"
+    size_kb: 1120
+    flops_mops: 65
+    params_k: 580
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      top1_accuracy: 0.645
+    status: production
+
+  # ── Vision / Object Detection ─────────────────────────────────────────────
+  yolov8_m:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: tflite
+    input_size: [320, 320]
+    input_channels: 3
+    input_type: float32
+    num_classes: 80
+    dataset: coco
+    weight_file: "yolov8m_int8.tflite"
+    model_path: "tasks/vision/object-detection/yolov8"
+    size_mb: 26.1
+    flops_gops: 78.9
+    params_m: 25.9
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      mAP_50: 0.502
+    status: production
+
+  yolov5:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: tflite
+    input_size: [320, 320]
+    input_channels: 3
+    input_type: float32
+    num_classes: 80
+    dataset: coco
+    weight_file: "yolov5s_int8.tflite"
+    model_path: "tasks/vision/object-detection/yolov5"
+    size_mb: 7.1
+    flops_gops: 4.2
+    params_m: 7.2
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      mAP_50: 0.370
+    status: production
+
+  yolov4_tiny:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: tflite
+    input_size: [416, 416]
+    input_channels: 3
+    input_type: float32
+    num_classes: 80
+    dataset: coco
+    weight_file: "yolov4-tiny_int8.tflite"
+    model_path: "tasks/vision/object-detection/yolov4tiny"
+    size_mb: 23.1
+    flops_gops: 6.9
+    params_m: 6.0
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      mAP_50: 0.217
+    status: production
+
+  ssdlite_mobilenetv2:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: tflite
+    input_size: [320, 320]
+    input_channels: 3
+    input_type: float32
+    num_classes: 90
+    dataset: coco
+    weight_file: "ssdlite_mobilenet_v2_coco_quant_postprocess.tflite"
+    model_path: "tasks/vision/object-detection/ssdlite-mobilenetv2"
+    size_mb: 6.7
+    flops_mops: 800
+    params_m: 3.4
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      mAP_50: 0.190
+    status: production
+
+  nanodet_m:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: tflite
+    input_size: [320, 320]
+    input_channels: 3
+    input_type: float32
+    num_classes: 80
+    dataset: coco
+    weight_file: "nanodet-m_int8.tflite"
+    model_path: "tasks/vision/object-detection/nanodet-m"
+    size_mb: 0.95
+    flops_mops: 320
+    params_k: 320
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: imx_rt1170
+        board: MIMXRT1170-EVK
+        delegate: cpu
+      - platform: imx_rt1050
+        board: IMXRT1050-EVKB
+        delegate: cpu
+    metrics:
+      mAP_50: 0.202
+    status: production
+
+  facedet:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: tflite
+    input_size: [128, 128]
+    input_channels: 3
+    input_type: float32
+    num_classes: 1
+    dataset: widerface
+    weight_file: "facedet_int8.tflite"
+    model_path: "tasks/vision/object-detection/faceDet"
+    size_kb: 250
+    flops_mops: 22
+    params_k: 120
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: imx_rt1170
+        board: MIMXRT1170-EVK
+        delegate: cpu
+      - platform: imx_rt1060
+        board: IMXRT1060-EVK
+        delegate: cpu
+      - platform: mcx_n947
+        board: FRDM-MCXN947
+        delegate: npu
+    metrics:
+      widerface_easy: 0.838
+    status: production
+
+  efficientdet_lite0:
+    version: "1.0.0"
+    task: object_detection
+    domain: vision
+    format: tflite
+    input_size: [320, 320]
+    input_channels: 3
+    input_type: float32
+    num_classes: 90
+    dataset: coco
+    weight_file: "efficientdet_lite0_int8.tflite"
+    model_path: "tasks/vision/object-detection/efficientdet-lite0"
+    size_mb: 4.9
+    flops_gops: 0.98
+    params_m: 3.2
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      mAP_50: 0.250
+    status: production
+
+  # ── Vision / Segmentation ─────────────────────────────────────────────────
+  deeplabv3:
+    version: "1.0.0"
+    task: semantic_segmentation
+    domain: vision
+    format: tflite
+    input_size: [513, 513]
+    input_channels: 3
+    input_type: float32
+    num_classes: 21
+    dataset: pascal_voc_2012
+    weight_file: "deeplabv3_mnv2_pascal_train_aug_quant.tflite"
+    model_path: "tasks/vision/semantic-segmentation/deeplabv3"
+    size_kb: 983
+    flops_gops: 1.76
+    params_k: 900
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+    metrics:
+      mIoU: 0.702
+    status: production
+
+  # ── Vision / Instance Segmentation ───────────────────────────────────────
+  yolact_edge:
+    version: "1.0.0"
+    task: instance_segmentation
+    domain: vision
+    format: tflite
+    input_size: [550, 550]
+    input_channels: 3
+    input_type: float32
+    num_classes: 80
+    dataset: coco
+    weight_file: "yolact_edge_mobilenetv2_int8.tflite"
+    model_path: "tasks/vision/instance-segmentation/YOLACT-Edge"
+    size_mb: 8.5
+    flops_gops: 17.0
+    params_m: 4.9
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      mAP_mask: 0.210
+    status: production
+
+  # ── Vision / Super Resolution ─────────────────────────────────────────────
+  fast_srgan:
+    version: "1.0.0"
+    task: super_resolution
+    domain: vision
+    format: tflite
+    input_size: [128, 128]
+    input_channels: 3
+    input_type: float32
+    scale_factor: 4
+    dataset: div2k
+    weight_file: "fast_srgan_int8.tflite"
+    model_path: "tasks/vision/super-resolution/Fast-SRGAN"
+    size_kb: 240
+    flops_mops: 460
+    params_k: 168
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      psnr_db: 31.2
+      ssim: 0.87
+    status: production
+
+  # ── Vision / Low-light Enhancement ───────────────────────────────────────
+  sci_low_light:
+    version: "1.0.0"
+    task: low_light_enhancement
+    domain: vision
+    format: tflite
+    input_size: [1920, 1080]
+    input_channels: 3
+    input_type: float32
+    dynamic_shape: true
+    dataset: lol
+    weight_file: "SCI_easy_int8.tflite"
+    model_path: "tasks/vision/low-light-enhancement/SCI"
+    size_kb: 8
+    flops_mops: 752
+    params: 5870
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      psnr_db: 28.3
+    status: production
+
+  # ── Vision / Monocular Depth ──────────────────────────────────────────────
+  midas_v21_small:
+    version: "1.0.0"
+    task: monocular_depth
+    domain: vision
+    format: tflite
+    input_size: [256, 256]
+    input_channels: 3
+    input_type: float32
+    dataset: mixed_10_datasets
+    weight_file: "midas_v21_small_int8.tflite"
+    model_path: "tasks/vision/monocular-depth-estimation/midas"
+    size_mb: 17.0
+    flops_gops: 9.2
+    params_m: 4.5
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+    metrics:
+      rel_error: 0.122
+    status: production
+
+  # ── Vision / Face Recognition ─────────────────────────────────────────────
+  facenet512:
+    version: "1.0.0"
+    task: face_recognition
+    domain: vision
+    format: tflite
+    input_size: [160, 160]
+    input_channels: 3
+    input_type: float32
+    embedding_dim: 512
+    dataset: lfw
+    weight_file: "facenet512_int8.tflite"
+    model_path: "tasks/vision/face-recognition/facenet512"
+    size_mb: 22.5
+    flops_gops: 1.1
+    params_m: 23.5
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      lfw_accuracy: 0.9935
+    status: production
+
+  # ── Vision / Pose Estimation ──────────────────────────────────────────────
+  movenet:
+    version: "1.0.0"
+    task: pose_estimation
+    domain: vision
+    format: tflite
+    input_size: [192, 192]
+    input_channels: 3
+    input_type: int8
+    num_keypoints: 17
+    dataset: coco_active
+    weight_file: "movenet_singlepose_lightning_int8.tflite"
+    model_path: "tasks/vision/pose-estimation/movenet"
+    size_mb: 2.5
+    flops_mops: 200
+    params_m: 3.5
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      pck_50: 0.726
+    status: production
+
+  whenet:
+    version: "1.0.0"
+    task: pose_estimation
+    domain: vision
+    format: tflite
+    input_size: [224, 224]
+    input_channels: 3
+    input_type: float32
+    output: "yaw_pitch_roll_degrees"
+    dataset: 300w_lp
+    weight_file: "WHENet_int8.tflite"
+    model_path: "tasks/vision/pose-estimation/whenet"
+    size_mb: 3.0
+    flops_mops: 450
+    params_m: 1.5
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      mae_yaw: 4.2
+    status: production
+
+  # ── Audio / Keyword Spotting ──────────────────────────────────────────────
+  ds_cnn:
+    version: "1.0.0"
+    task: keyword_spotting
+    domain: audio
+    format: tflite
+    input_shape: [1, 49, 10, 1]
+    input_type: int8
+    num_classes: 12
+    dataset: google_speech_commands_v1
+    weight_file: "ds_cnn_int8.tflite"
+    model_path: "tasks/audio/command-recognition/keyword-spotting_DSCNN"
+    size_kb: 47
+    flops_mops: 5
+    params_k: 24
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: mcx_n947
+        board: FRDM-MCXN947
+        delegate: npu
+    metrics:
+      top1_accuracy: 0.916
+    status: production
+
+  microspeech_lstm:
+    version: "1.0.0"
+    task: keyword_spotting
+    domain: audio
+    format: tflite
+    input_type: int8
+    num_classes: 4
+    dataset: google_speech_commands
+    weight_file: "micro_speech_lstm_int8.tflite"
+    model_path: "tasks/audio/command-recognition/micro-speech-LSTM"
+    size_kb: 28
+    flops_mops: 1
+    params_k: 21
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: mcx_n947
+        board: FRDM-MCXN947
+        delegate: npu
+    metrics:
+      top1_accuracy: 0.881
+    status: production
+
+  # ── Audio / Speech Recognition ────────────────────────────────────────────
+  wav2letter:
+    version: "1.0.0"
+    task: speech_recognition
+    domain: audio
+    format: tflite
+    input_shape: [1, 296, 39]
+    input_type: float32
+    output_shape: [1, 1, 148, 29]
+    dataset: librispeech
+    weight_file: "wav2letter_int8.tflite"
+    model_path: "tasks/audio/speech-recognition/wav2letter"
+    size_mb: 14.0
+    flops_mops: 6982
+    params_m: 7.2
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+    metrics:
+      wer: 0.072
+    status: production
+
+  # ── Audio / Anomaly Detection ─────────────────────────────────────────────
+  deep_autoencoder_ad:
+    version: "1.0.0"
+    task: anomaly_detection
+    domain: audio
+    format: tflite
+    input_type: float32
+    dataset: toyadmos
+    weight_file: "deep_autoencoder_int8.tflite"
+    model_path: "tasks/audio/anomaly-detection/deep-autoencoder"
+    size_kb: 180
+    flops_mops: 8
+    params_k: 44
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: xnnpack
+      - platform: imx93
+        board: IMX93EVKBOARD
+        delegate: ethos_u65
+        vela_required: true
+      - platform: imx_rt1170
+        board: MIMXRT1170-EVK
+        delegate: cpu
+      - platform: mcx_n947
+        board: FRDM-MCXN947
+        delegate: npu
+    metrics:
+      auc_roc: 0.820
+    status: production
+
+  # ── Misc / EEG BCI ────────────────────────────────────────────────────────
+  eeg_tcnet:
+    version: "1.0.0"
+    task: eeg_classification
+    domain: misc
+    format: tflite
+    input_shape: [1, 1, 22, 1125]
+    input_type: float32
+    num_classes: 4
+    dataset: bci_competition_iv_2a
+    weight_file: "EEG_TCNet_S1_int8.tflite"
+    model_path: "tasks/misc/eegTCNet"
+    size_kb: 16
+    flops_mops: 14
+    params_k: 4
+    supported_platforms:
+      - platform: imx8mplus
+        board: 8MPLUSLPD4-EVK
+        delegate: cpu
+        note: "NPU acceleration not supported in LF6.1.36"
+    metrics:
+      top1_accuracy: 0.7735
+    status: experimental
+    notes: "9 per-subject models; subject-specific training required for optimal performance"

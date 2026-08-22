@@ -1,0 +1,34 @@
+# NXP eIQ Model Zoo MLOps Pipeline — Python dependencies
+
+# Core
+pyyaml>=6.0
+numpy>=1.23
+Pillow>=9.0
+
+# TFLite runtime (choose one)
+# tflite-runtime         # lightweight: pip install tflite-runtime
+# tensorflow             # full:        pip install tensorflow
+
+# Audio features (optional — data_pipeline falls back gracefully without it)
+# librosa>=0.10.0
+
+# Testing
+pytest>=7.0
+
+# Linting
+flake8>=6.0
+
+# ── NXP / Arm Frameworks (install separately) ─────────────────────────────────
+#
+# Arm Vela compiler (for i.MX 93 / Ethos-U65 NPU acceleration):
+#   pip install ethos-u-vela
+#   vela --help
+#
+# NXP eIQ Portal (GUI profiling tool):
+#   https://www.nxp.com/design/software/development-software/eiq-ml-development-environment
+#
+# NXP ML Examples (reference inference apps for i.MX boards):
+#   https://github.com/nxp-imx/eiq-examples
+#
+# i.MX Machine Learning User Guide:
+#   https://www.nxp.com/docs/en/user-guide/IMX-MACHINE-LEARNING-UG.pdf

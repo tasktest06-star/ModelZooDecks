@@ -1,0 +1,301 @@
+name: NXP eIQ Model Zoo MLOps CI
+
+on:
+  push:
+    branches: [ nxp-modelzoo, develop ]
+  pull_request:
+    branches: [ main, nxp-modelzoo ]
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model name (e.g. mobilenetv2)"
+        required: false
+        default: ""
+      platform:
+        description: "Target platform"
+        required: false
+        default: "imx8mplus"
+
+env:
+  PYTHON_VERSION: "3.10"
+  DEFAULT_PLATFORM: "imx8mplus"
+  DEFAULT_MODEL: "mobilenetv2"
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install linting deps
+        run: pip install flake8 pyyaml
+
+      - name: Lint Python files
+        run: |
+          flake8 code-nxp/ \
+            --max-line-length=100 \
+            --ignore=E501,W503,E203 \
+            --exclude=code-nxp/.github
+
+      - name: Validate YAML configs
+        run: |
+          python -c "
+          import yaml, glob, sys
+          errors = []
+          for f in glob.glob('code-nxp/config/*.yaml'):
+              try:
+                  yaml.safe_load(open(f))
+                  print(f'  OK: {f}')
+              except Exception as e:
+                  errors.append(f'{f}: {e}')
+          if errors:
+              [print(e) for e in errors]
+              sys.exit(1)
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install test deps
+        run: pip install pytest pyyaml numpy Pillow
+
+      - name: Run unit tests
+        run: |
+          cd code-nxp
+          python -m pytest tests/ -v --tb=short
+
+      - name: Smoke test — imports and preprocessing
+        run: |
+          cd code-nxp
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from mlops.data_pipeline import (
+              preprocess_vision_classification,
+              preprocess_vision_detection,
+              preprocess_vision_segmentation,
+              preprocess_eeg,
+              compute_mfcc,
+          )
+          from mlops.model_manager import ModelManager
+          from mlops.artifact_manager import ArtifactManager
+          from mlops.monitor import InferenceMonitor
+          import numpy as np
+
+          # Vision
+          img = np.zeros((480, 640, 3), dtype='uint8')
+          for task_fn, sz in [
+              (preprocess_vision_classification, (224, 224)),
+              (preprocess_vision_segmentation, (513, 513)),
+          ]:
+              out = task_fn(img, sz)
+              assert out.ndim == 4, f'Expected NHWC, got {out.shape}'
+          det_out, scale, _ = preprocess_vision_detection(img, (320, 320))
+          assert det_out.ndim == 4
+
+          # EEG
+          eeg = np.zeros((22, 1125), dtype='float32')
+          out = preprocess_eeg(eeg)
+          assert out.shape == (1, 1, 22, 1125)
+
+          # Audio
+          audio = np.zeros(16000, dtype='float32')
+          out = compute_mfcc(audio)
+          assert out.shape == (1, 49, 10, 1)
+
+          print('All smoke tests passed.')
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  evaluate:
+    name: Evaluate — ${{ matrix.domain }}/${{ matrix.task }}
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    strategy:
+      matrix:
+        include:
+          - domain: vision
+            task: image_classification
+            model: mobilenetv2
+            platform: imx8mplus
+          - domain: vision
+            task: object_detection
+            model: yolov8_m
+            platform: imx8mplus
+          - domain: audio
+            task: keyword_spotting
+            model: ds_cnn_kws
+            platform: imx8mplus
+          - domain: misc
+            task: eeg_classification
+            model: eeg_tcnet
+            platform: imx8mplus
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pyyaml numpy Pillow
+
+      - name: Run evaluation (dry-run, no model file required)
+        run: |
+          cd code-nxp
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from pipelines.eval_pipeline import evaluate_model, make_dummy_samples
+          import yaml
+
+          config_path = 'config/pipeline_config.yaml'
+          task = '${{ matrix.task }}'
+          domain = '${{ matrix.domain }}'
+
+          # Dry-run: test preprocessing pipeline only (no .tflite required)
+          samples = make_dummy_samples(task, n=5)
+          print(f'[CI] {domain}/{task}: generated {len(samples)} dummy samples OK')
+          print(f'[CI] Input shape: {samples[0][0].shape}')
+          print('[CI] Preprocessing pipeline PASS')
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  validate-registry:
+    name: Validate Model Registry
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pyyaml
+
+      - name: Validate registry YAML
+        run: |
+          cd code-nxp
+          python -c "
+          import yaml, sys
+          with open('config/model_registry.yaml') as f:
+              reg = yaml.safe_load(f)
+          models = reg.get('models', {})
+          print(f'Registry: {len(models)} models')
+          errors = []
+          required = ['task', 'domain', 'format', 'model_path', 'weight_file']
+          for name, meta in models.items():
+              for field in required:
+                  if field not in meta:
+                      errors.append(f'{name}: missing {field}')
+              if not meta.get('supported_platforms'):
+                  errors.append(f'{name}: no supported_platforms')
+          if errors:
+              [print(f'  ERROR: {e}') for e in errors]
+              sys.exit(1)
+          print('Registry validation PASS')
+          "
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  package-artifacts:
+    name: Package Deployment Bundle
+    runs-on: ubuntu-latest
+    needs: [evaluate, validate-registry]
+    if: github.ref == 'refs/heads/nxp-modelzoo'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pyyaml numpy Pillow
+
+      - name: Create dummy TFLite file and package bundle
+        run: |
+          cd code-nxp
+          python -c "
+          import yaml, sys, tempfile, os
+          sys.path.insert(0, '.')
+          from mlops.artifact_manager import ArtifactManager
+
+          with open('config/pipeline_config.yaml') as f:
+              config = yaml.safe_load(f)
+
+          # Create dummy tflite for packaging test
+          with tempfile.NamedTemporaryFile(suffix='.tflite', delete=False) as f:
+              f.write(b'TFL3_DUMMY')
+              tflite_path = f.name
+
+          config['artifact']['output_dir'] = 'deployed/'
+          manager = ArtifactManager(config)
+          meta = {
+              'task': 'image_classification',
+              'domain': 'vision',
+              'input_size': [224, 224],
+              'num_classes': 1000,
+              'supported_platforms': [{'platform': 'imx8mplus'}],
+              'metrics': {'top1_accuracy': 0.718},
+          }
+          bundle = manager.create_bundle('mobilenetv2_ci', tflite_path, meta)
+          print(f'Bundle created: {bundle}')
+          assert manager.verify_bundle(str(bundle)), 'Bundle verification failed'
+          print('Bundle verification PASS')
+          os.unlink(tflite_path)
+          "
+
+      - name: Upload deployment bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: deploy-bundle-nxp
+          path: code-nxp/deployed/*.tgz
+          retention-days: 30
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  trigger-recipe-rerun:
+    name: Trigger Recipe Re-run
+    runs-on: ubuntu-latest
+    needs: evaluate
+    if: failure()
+
+    steps:
+      - name: Recipe re-run instructions
+        run: |
+          echo "============================================"
+          echo "Evaluation gate failed on ${{ github.sha }}"
+          echo "ACTION: Re-run recipe to regenerate model:"
+          echo ""
+          echo "  cd tasks/<domain>/<task>/<model>"
+          echo "  docker build -t nxp-model-zoo ."
+          echo "  docker run --rm -v \"\$PWD:/workspace\" nxp-model-zoo /workspace/recipe.sh"
+          echo ""
+          echo "For i.MX 93 / Ethos-U65:"
+          echo "  pip install ethos-u-vela"
+          echo "  vela --accelerator-config ethos-u65-256 model_quant.tflite"
+          echo "============================================"
