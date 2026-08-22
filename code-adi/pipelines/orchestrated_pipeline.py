@@ -35,7 +35,12 @@ def evaluate_model_task(model_id: str, device: str, config_path: str,
         try:
             from mlops.evaluator import Evaluator
             evaluator = Evaluator(config_path)
-            results = evaluator.evaluate(model_id=model_id, device=device, n_samples=50)
+            raw = evaluator.run(model_name=model_id, device=device, n_samples=50)
+            metrics = raw.get("metrics", raw)
+            results = {
+                "top1_accuracy": metrics.get("top1_accuracy", metrics.get("accuracy", 0.0)),
+                **metrics,
+            }
         except Exception as e:
             logger.warning(f"Eval failed for {model_id}: {e}")
         tracker.log_eval_metrics(

@@ -11,7 +11,7 @@ class ExperimentTracker:
     EXPERIMENT_NAME = "adi-ai8x-modelzoo"
 
     def __init__(self, tracking_uri: str = None, experiment_name: str = None):
-        self.tracking_uri = tracking_uri or os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns")
+        self.tracking_uri = tracking_uri or os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
         self.experiment_name = experiment_name or self.EXPERIMENT_NAME
         mlflow.set_tracking_uri(self.tracking_uri)
         mlflow.set_experiment(self.experiment_name)
@@ -63,6 +63,8 @@ class ExperimentTracker:
         val = run.data.metrics.get(metric_key, 0.0)
         if val < accuracy_gate:
             raise ValueError(f"{model_name}: {metric_key}={val:.4f} below gate {accuracy_gate}")
+        with mlflow.start_run(run_id=run_id):
+            mlflow.log_dict({"model_name": model_name, "metric": val}, "model/metadata.json")
         result = mlflow.register_model(f"runs:/{run_id}/model", model_name)
         client.set_registered_model_tag(model_name, "device_validated", "true")
         return result.version
