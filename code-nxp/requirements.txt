@@ -9,8 +9,9 @@ Pillow>=9.0
 # tflite-runtime         # lightweight: pip install tflite-runtime
 # tensorflow             # full:        pip install tensorflow
 
-# Audio features (optional — data_pipeline falls back gracefully without it)
-# librosa>=0.10.0
+# Audio features (required by compute_mfcc and compute_wav2letter_features)
+librosa>=0.10.0
+soundfile>=0.12.0
 
 # Testing
 pytest>=7.0
