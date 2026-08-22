@@ -36,14 +36,14 @@ class PipelineStack(Stack):
                         iam.PolicyStatement(
                             actions=["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
                             resources=[
-                                "arn:aws:s3:::adi-modelzoo-weights",
-                                "arn:aws:s3:::adi-modelzoo-weights/*",
-                                "arn:aws:s3:::adi-modelzoo-synthesized",
-                                "arn:aws:s3:::adi-modelzoo-synthesized/*",
-                                "arn:aws:s3:::adi-modelzoo-artifacts",
-                                "arn:aws:s3:::adi-modelzoo-artifacts/*",
-                                "arn:aws:s3:::adi-modelzoo-pipeline-artifacts",
-                                "arn:aws:s3:::adi-modelzoo-pipeline-artifacts/*",
+                                "arn:aws:s3:::adi-modelzoo-weights-*",
+                                "arn:aws:s3:::adi-modelzoo-weights-*/*",
+                                "arn:aws:s3:::adi-modelzoo-synthesized-*",
+                                "arn:aws:s3:::adi-modelzoo-synthesized-*/*",
+                                "arn:aws:s3:::adi-modelzoo-artifacts-*",
+                                "arn:aws:s3:::adi-modelzoo-artifacts-*/*",
+                                "arn:aws:s3:::adi-modelzoo-pipeline-artifacts*",
+                                "arn:aws:s3:::adi-modelzoo-pipeline-artifacts*/*",
                             ],
                         )
                     ]
@@ -111,7 +111,7 @@ class PipelineStack(Stack):
                     },
                     "build": {
                         "commands": [
-                            "python code-adi/pipelines/synthesize_pipeline.py --config code-adi/config/pipeline_config.yaml",
+                            "python code-adi/pipelines/train_pipeline.py --config code-adi/config/pipeline_config.yaml --stage synthesize",
                             "aws s3 sync code-adi/synthesized/ s3://adi-modelzoo-synthesized/",
                         ]
                     },
