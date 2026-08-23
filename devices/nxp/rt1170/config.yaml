@@ -1,0 +1,48 @@
+device: RT1170
+cpu: "ARM Cortex-M7 1GHz + M4 400MHz"
+sram_mb: 2
+flash_mb: 16
+npu: false
+supported_models:
+  - name: mobilenetv1_100
+    task: classification
+    input_shape: [1, 224, 224, 3]
+    format: tflite
+    quantization: INT8
+    top1: 70.9
+    latency_ms: 75
+    ram_kb: 512
+  - name: mobilenetv2_100
+    task: classification
+    input_shape: [1, 224, 224, 3]
+    format: tflite
+    quantization: INT8
+    top1: 71.8
+    latency_ms: 105
+    ram_kb: 820
+  - name: mnasnet_100
+    task: classification
+    input_shape: [1, 224, 224, 3]
+    format: tflite
+    quantization: INT8
+    top1: 73.5
+    latency_ms: 120
+    ram_kb: 960
+  - name: ssdlite_mobilenetv2
+    task: detection
+    input_shape: [1, 300, 300, 3]
+    format: tflite
+    quantization: INT8
+    mAP: 22.1
+    latency_ms: 320
+    ram_kb: 1500
+  - name: microspeech_kws
+    task: kws
+    input_shape: [1, 49, 40, 1]
+    format: tflite_micro
+    quantization: INT8
+    accuracy: 89.0
+    latency_ms: 55
+    ram_kb: 200
+runtime: tflite
+use_case: "Industrial motor monitoring, predictive maintenance, smart home control"

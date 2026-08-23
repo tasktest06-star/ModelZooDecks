@@ -1,0 +1,18 @@
+device: MCX-N947
+cpu: "ARM Cortex-M33 150MHz"
+dsp: "M33 DSP extension"
+sram_kb: 512
+flash_mb: 4
+npu: false
+supported_models:
+  - name: mobilenetv1_025
+    task: classification
+    input_shape: [1, 96, 96, 3]
+    format: tflite_micro
+    quantization: INT8
+    top1: 50.8
+    latency_ms: 170
+    ram_kb: 128
+    flash_kb: 300
+runtime: tflite_micro
+use_case: "Keyword spotting, vibration classification, predictive maintenance"

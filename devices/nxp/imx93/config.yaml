@@ -1,0 +1,40 @@
+device: i.MX 93
+cpu: "Cortex-A55 1.7GHz dual-core"
+npu: "Ethos-U65 1.0 TOPS"
+ram_gb: 2
+supported_models:
+  - name: nanodet_plus_320
+    task: detection
+    input_shape: [1, 320, 320, 3]
+    format: tflite_vela
+    quantization: INT8
+    mAP: 27.0
+    latency_ms: 30
+    vela_speedup: 3.2
+  - name: efficientdet_lite0
+    task: detection
+    input_shape: [1, 320, 320, 3]
+    format: tflite_vela
+    quantization: INT8
+    mAP: 25.7
+    latency_ms: 45
+    vela_speedup: 3.8
+  - name: mobilenetv2_100
+    task: classification
+    input_shape: [1, 224, 224, 3]
+    format: tflite_vela
+    quantization: INT8
+    top1: 71.8
+    latency_ms: 8
+    vela_speedup: 4.0
+  - name: ds_cnn_l
+    task: kws
+    input_shape: [1, 49, 40, 1]
+    format: tflite_vela
+    quantization: INT8
+    accuracy: 95.1
+    latency_ms: 6
+    vela_speedup: 3.5
+runtime: tflite_vela
+npu_coverage_pct: 92
+use_case: "IoT gateway, wearable, drone object detection"

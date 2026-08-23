@@ -1,0 +1,50 @@
+device: i.MX 8M Plus
+cpu: "Cortex-A53 1.8GHz quad-core"
+npu: "NXP NPU 2.3 TOPS"
+ram_gb: 4
+supported_models:
+  - name: yolov8m
+    task: detection
+    input_shape: [1, 640, 640, 3]
+    format: tflite
+    quantization: INT8
+    mAP: 50.2
+    latency_ms: 62
+  - name: resnet50
+    task: classification
+    input_shape: [1, 224, 224, 3]
+    format: tflite
+    quantization: INT8
+    top1: 76.1
+    latency_ms: 18
+  - name: inceptionv4
+    task: classification
+    input_shape: [1, 299, 299, 3]
+    format: tflite
+    quantization: INT8
+    top1: 79.2
+    latency_ms: 45
+  - name: facenet512
+    task: face_recognition
+    input_shape: [1, 160, 160, 3]
+    format: tflite
+    quantization: INT8
+    lfw_accuracy: 99.65
+    latency_ms: 25
+  - name: wav2letter
+    task: asr
+    input_shape: [1, 296, 39, 1]
+    format: tflite
+    quantization: INT8
+    wer_pct: 7.2
+    latency_ms: 120
+  - name: mobilenetv3_large
+    task: classification
+    input_shape: [1, 224, 224, 3]
+    format: tflite
+    quantization: INT8
+    top1: 75.2
+    latency_ms: 12
+runtime: tflite_npu
+npu_coverage_pct: 88
+use_case: "Smart camera, DMS, face recognition, factory inspection, ASR"
