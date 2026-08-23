@@ -1,0 +1,34 @@
+device: ADSP-SC835
+family: SigmaDSP
+vendor: Analog Devices
+cores:
+  dsp: SHARC+ x2 @ 1 GHz
+  arm: Cortex-A55 x2
+sram_mb: 512
+use_case: audio_processing
+power_mw:
+  active: 800
+  idle: 50
+supported_models:
+  rnnoise_speech_enhancement:
+    task: speech_enhancement
+    input_shape: [1, 512]
+    latency_ms: 4.0
+    pesq: 3.1
+    sram_mb: 8
+    framework: custom_sharc
+  wav2letter_asr:
+    task: asr
+    input_shape: [1, 80, 200]
+    latency_ms: 40.0
+    wer_pct: 7.2
+    sram_mb: 48
+    framework: onnx_runtime
+  genre_net:
+    task: classification
+    input_shape: [1, 128, 128]
+    latency_ms: 15.0
+    accuracy_pct: 87.3
+    sram_mb: 16
+    framework: onnx_runtime
+    num_classes: 10

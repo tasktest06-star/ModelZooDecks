@@ -1,0 +1,48 @@
+device: MAX78002
+family: AI8X
+vendor: Analog Devices
+cores:
+  cpu: Cortex-M4F + RISC-V (coprocessor)
+  cnn: 64 parallel processors, 442 TOPS/W
+sram_kb: 5120
+flash_kb: 16384
+quant_scheme: QAT (INT4/INT8)
+power_mw:
+  inference: 15.0
+  sleep: 0.03
+efficiency_tops_w: 442
+supported_models:
+  keyword_spotting_ds_cnn:
+    task: kws
+    input_type: mfcc
+    input_shape: [1, 64, 101]
+    latency_ms: 0.15
+    accuracy_pct: 94.5
+    energy_uj: 2.3
+    sram_kb: 512
+    params_k: 57
+  visual_wake_words:
+    task: classification
+    input_shape: [3, 96, 96]
+    latency_ms: 0.8
+    accuracy_pct: 88.0
+    energy_uj: 12.0
+    sram_kb: 1800
+    params_k: 221
+  face_detection_fpn:
+    task: detection
+    input_shape: [3, 64, 64]
+    latency_ms: 0.5
+    map_50: 72.0
+    energy_uj: 8.0
+    sram_kb: 1200
+    params_k: 412
+  anomaly_detection:
+    task: anomaly
+    input_type: time_series
+    input_shape: [1, 128]
+    latency_ms: 0.05
+    auc: 0.96
+    energy_uj: 0.75
+    sram_kb: 64
+    params_k: 12
