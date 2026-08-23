@@ -35,6 +35,12 @@ ModelZooDecks/
 | `model-combination-ti` | TI 3-application multi-model pipeline code |
 | `model-combination-adi` | ADI 3-application multi-model pipeline code |
 | `model-combination-nxp` | NXP 3-application multi-model pipeline code |
+| `practical-examples-ti` | TI GStreamer demos, person counter, classify_image CLI |
+| `practical-examples-adi` | ADI smart sensor FSM, KWS/VWW demos |
+| `practical-examples-nxp` | NXP Vela compile tools, eIQ demos |
+| `device-inference-ti` | Per-device inference engines: AM62A/AM67A/AM68A/AM69A/TDA4VM — 70 tests |
+| `device-inference-adi` | Per-device inference engines: MAX78002/MAX32690/ADSP-SC835 — 43 tests |
+| `device-inference-nxp` | Per-device inference engines: MCX-N947/RT1170/i.MX93/i.MX8M+ — 53 tests |
 
 ---
 
@@ -270,6 +276,57 @@ af7abbc  Add NXP eIQ product-specific slide deck
 6a8967e  Add TI AWS CDK v2 infrastructure
 f9b62b7  Expand TI registry to 34 models
 563898b  Add MLOps pipeline code and slides
+```
+
+---
+
+## Per-Device Inference Engines
+
+Three branches implement hardware-accurate inference simulation for all 12 supported edge AI devices.
+
+### Pattern (same across all companies)
+Each device has `inference.py` (engine class), `config.yaml` (specs + supported models), and `tests/test_<device>.py` (pytest suite). Common `preprocess.py` / `postprocess.py` in `devices/<company>/common/`.
+
+### TI EdgeAI (`device-inference-ti`) — 70 tests
+
+| Device | TOPS | Models | Tasks |
+|--------|------|--------|-------|
+| AM62A | 1.0 | mobilenet_v2_lite, yolox_pico/nano_lite | cls, det |
+| AM67A | 4.0 | + yolox-s-lite, deeplabv3+ | cls, det, seg |
+| AM68A | 8.0 | All 34 _lite models | cls, det, seg, pose, depth |
+| AM69A | 32.0 | All 34 + stereo depth | cls, det, seg, pose, depth |
+| TDA4VM | 8.0 (ASIL-B) | ADAS subset + yolox-s-lite | cls, det, seg |
+
+### ADI AI8X (`device-inference-adi`) — 43 tests
+
+| Device | Key spec | Models | Tasks |
+|--------|----------|--------|-------|
+| MAX78002 | CNN accel, 442 TOPS/W, 5MB SRAM | mobilenetv2_050/075, simplenet, FPN, autoencoder_vibration | cls, det, anomaly |
+| MAX32690 | M4F SW, 3µA sleep | ds_cnn (KWS), micronet_m/s/vww | kws, cls, vww |
+| ADSP-SC835 | Dual SHARC+ DSP | rnnoise, dtln, genrenet, ds_cnn_asr | denoise, genre, kws |
+
+### NXP eIQ (`device-inference-nxp`) — 53 tests
+
+| Device | Key spec | Models | Tasks |
+|--------|----------|--------|-------|
+| MCX-N947 | M33, 512KB SRAM, TFLM | mobilenetv1_025 | cls |
+| RT1170 | M7 1GHz, 2MB SRAM | mobilenetv1/v2, mnasnet, ssdlite, microspeech | cls, det, kws |
+| i.MX 93 | Ethos-U65 1.0 TOPS, Vela 3–4× | nanodet, efficientdet-lite0, mobilenetv2, ds_cnn | det, cls, kws |
+| i.MX 8M Plus | NPU 2.3 TOPS, 4GB | yolov8m, resnet50, inceptionv4, facenet512, wav2letter | det, cls, face, asr |
+
+### Running device tests
+```bash
+# TI
+git checkout device-inference-ti
+python -m pytest devices/ti/ -v
+
+# ADI
+git checkout device-inference-adi
+python -m pytest devices/adi/ -v
+
+# NXP
+git checkout device-inference-nxp
+python -m pytest devices/nxp/ -v
 ```
 
 ---
