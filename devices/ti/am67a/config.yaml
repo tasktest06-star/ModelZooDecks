@@ -1,0 +1,6 @@
+device: AM67A
+tops: 4.0
+ram_gb: 4
+cores:
+  cpu: Cortex-A53 x4 + DSP C7x x2
+  npu: MMA C7x (4 TOPS)

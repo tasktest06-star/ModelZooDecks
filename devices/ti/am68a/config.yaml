@@ -1,0 +1,6 @@
+device: AM68A
+tops: 8.0
+ram_gb: 8
+cores:
+  cpu: Cortex-A72 x4
+  dsp: C7x x2 + MMA

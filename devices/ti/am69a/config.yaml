@@ -1,0 +1,6 @@
+device: AM69A
+tops: 32.0
+ram_gb: 32
+cores:
+  cpu: Cortex-A72 x8
+  dsp: C7x x8 + MMA

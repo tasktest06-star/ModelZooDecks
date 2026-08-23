@@ -1,0 +1,5 @@
+device: TDA4VM
+tops: 8.0
+ram_gb: 8
+safety: ASIL-B
+use_case: automotive_adas
